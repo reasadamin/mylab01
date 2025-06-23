@@ -1,0 +1,13 @@
+#Stage 1: Build the application
+FROM golang:1.21 as builder 
+
+WORKDIR /app 
+copy . .
+RUN go build -o myapp
+
+#Stage 2: Create minimal runtime image
+
+FROM alpine:latest
+WORKDIR /app
+COPY --from=builder /app/myapp .
+CMD [ "./myapp" ]
