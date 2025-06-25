@@ -14,3 +14,6 @@ COPY --from=builder /app .
 ENV PYTHONPATH=/app/deps
 
 CMD [ "python", "app.py" ]
+
+## docker run --rm -d --name app python-multistage tail -f /dev/null
+## docker exec -it app sh
