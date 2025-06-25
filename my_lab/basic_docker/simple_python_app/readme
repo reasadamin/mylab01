@@ -1,0 +1,29 @@
+
+Output:
+
+shamrat@shamrat:$ date;docker build -t python-multistage .
+Wed Jun 25 02:29:45 PM +06 2025
+[+] Building 3.8s (13/13) FINISHED                                                                                                                                 docker:default
+ => [internal] load build definition from dockerfile                                                                                                                         0.0s
+ => => transferring dockerfile: 505B                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/python:3.12-alpine                                                                                                        1.8s
+ => [internal] load metadata for docker.io/library/python:3.12-slim                                                                                                          1.8s
+ => [internal] load .dockerignore                                                                                                                                            0.0s
+ => => transferring context: 2B                                                                                                                                              0.0s
+ => [builder 1/4] FROM docker.io/library/python:3.12-slim@sha256:e55523f127124e5edc03ba201e3dbbc85172a2ec40d8651ac752364b23dfd733                                            0.0s
+ => [stage-1 1/3] FROM docker.io/library/python:3.12-alpine@sha256:c610e4a94a0e8b888b4b225bfc0e6b59dee607b1e61fb63ff3926083ff617216                                          0.0s
+ => [internal] load build context                                                                                                                                            0.0s
+ => => transferring context: 569B                                                                                                                                            0.0s
+ => CACHED [builder 2/4] WORKDIR /app                                                                                                                                        0.0s
+ => [builder 3/4] COPY . .                                                                                                                                                   0.0s
+ => [builder 4/4] RUN pip install --target=/app/deps -r requirements.txt || true                                                                                             1.7s
+ => CACHED [stage-1 2/3] WORKDIR /app                                                                                                                                        0.0s
+ => [stage-1 3/3] COPY --from=builder /app .                                                                                                                                 0.1s 
+ => exporting to image                                                                                                                                                       0.0s 
+ => => exporting layers                                                                                                                                                      0.0s 
+ => => writing image sha256:81ddebbe017c6336535a42106cc70922b55f8f62d9b262e8327da6e7bdf76395                                                                                 0.0s 
+ => => naming to docker.io/library/python-multistage                                                                                                                         0.0s
+shamrat@shamrat:$ 
+shamrat@shamrat:$ date;docker run python-multistage
+Wed Jun 25 02:30:03 PM +06 2025
+Hello from multi-stage Python Docker build!
