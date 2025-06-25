@@ -3,3 +3,47 @@ docker build -t node-multistage .
 docker run -p 3000:3000 node-multistage
 
 curl http://localhost:3000
+
+## Output:
+
+shamrat@shamrat:$ docker build -t node-multistage .
+[+] Building 15.0s (11/11) FINISHED                                                                                                                                docker:default
+ => [internal] load build definition from Dockerfile                                                                                                                         0.0s
+ => => transferring dockerfile: 546B                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/node:20-alpine                                                                                                            3.0s
+ => [internal] load .dockerignore                                                                                                                                            0.0s
+ => => transferring context: 2B                                                                                                                                              0.0s
+ => [builder 1/5] FROM docker.io/library/node:20-alpine@sha256:674181320f4f94582c6182eaa151bf92c6744d478be0f1d12db804b7d59b2d11                                              6.5s
+ => => resolve docker.io/library/node:20-alpine@sha256:674181320f4f94582c6182eaa151bf92c6744d478be0f1d12db804b7d59b2d11                                                      0.0s
+ => => sha256:674181320f4f94582c6182eaa151bf92c6744d478be0f1d12db804b7d59b2d11 7.67kB / 7.67kB                                                                               0.0s
+ => => sha256:6d6b06f970b08f9ebbe65a5561c20e8623d6afa612ea035bbbe38fb78dd94b14 1.72kB / 1.72kB                                                                               0.0s
+ => => sha256:bfd94ebedbdada46a3d3447f6bc2de4d271021b3a45a76821cca6afa361ea94d 6.21kB / 6.21kB                                                                               0.0s
+ => => sha256:5432aa916e0868c8c9385ef60226d5ef530f13fe7c28fc13c054de1df6d006cd 42.99MB / 42.99MB                                                                             5.9s
+ => => sha256:2506673f55362e86b6c8a2ab9c01541ae636887386c92d06e01286d3ddd83871 1.26MB / 1.26MB                                                                               1.1s
+ => => sha256:98c4889b578e94078411d6c14fe8f5daa0303d43e82bbf84d5787ab657c42428 445B / 445B                                                                                   0.6s
+ => => extracting sha256:5432aa916e0868c8c9385ef60226d5ef530f13fe7c28fc13c054de1df6d006cd                                                                                    0.5s
+ => => extracting sha256:2506673f55362e86b6c8a2ab9c01541ae636887386c92d06e01286d3ddd83871                                                                                    0.0s
+ => => extracting sha256:98c4889b578e94078411d6c14fe8f5daa0303d43e82bbf84d5787ab657c42428                                                                                    0.0s
+ => [internal] load build context                                                                                                                                            0.0s
+ => => transferring context: 1.26kB                                                                                                                                          0.0s
+ => [builder 2/5] WORKDIR /app                                                                                                                                               0.1s
+ => [builder 3/5] COPY package*.json ./                                                                                                                                      0.0s
+ => [builder 4/5] RUN npm install --production                                                                                                                               5.1s
+ => [builder 5/5] COPY . .                                                                                                                                                   0.1s
+ => [stage-1 3/3] COPY --from=builder /app ./                                                                                                                                0.0s
+ => exporting to image                                                                                                                                                       0.0s 
+ => => exporting layers                                                                                                                                                      0.0s 
+ => => writing image sha256:d753e22af8d53ec44b80789f65b4aa5bac52d9997e0b300f61a3a7047d72a729                                                                                 0.0s
+ => => naming to docker.io/library/node-multistage                                                                                                                           0.0s
+
+shamrat@shamrat:$ docker run -p 3000:3000 node-multistage
+
+> node-multistage-app@1.0.0 start
+> node app.js
+
+Server running on port 3000
+
+From another terminal:
+shamrat@shamrat:$ date;curl http://localhost:3000
+Wed Jun 25 02:16:09 PM +06 2025
+Hello from multi-stage Node.js Docker build!
