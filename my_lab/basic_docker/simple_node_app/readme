@@ -1,0 +1,5 @@
+# Run the following commands
+docker build -t node-multistage .
+docker run -p 3000:3000 node-multistage
+
+curl http://localhost:3000
