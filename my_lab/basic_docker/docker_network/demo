@@ -1,0 +1,8 @@
+
+shamrat@shamrat:$ date;docker network ls
+Thu Jun 26 11:38:09 AM +06 2025
+NETWORK ID     NAME      DRIVER    SCOPE
+45d527da9ad4   bridge    bridge    local
+db2d02314666   host      host      local
+db16aac0d356   none      null      local
+
