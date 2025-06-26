@@ -20,7 +20,7 @@ db2d02314666   host      host      local
 db16aac0d356   none      null      local
 shamrat@shamrat:$ 
 
-#To inspect the created network
+# To inspect the created network
 shamrat@shamrat:$ docker network inspect br01
 [
     {
