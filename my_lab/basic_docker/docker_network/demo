@@ -6,3 +6,66 @@ NETWORK ID     NAME      DRIVER    SCOPE
 db2d02314666   host      host      local
 db16aac0d356   none      null      local
 
+shamrat@shamrat:$ docker network create --driver bridge br01
+0b181502091c9fa5a59049dc091e10c34ee35eab3a9ab6e494e38314409eac33
+shamrat@shamrat:$ 
+
+shamrat@shamrat:$ date;docker network ls
+Thu Jun 26 11:45:29 AM +06 2025
+NETWORK ID     NAME      DRIVER    SCOPE
+0b181502091c   br01      bridge    local
+45d527da9ad4   bridge    bridge    local
+db2d02314666   host      host      local
+db16aac0d356   none      null      local
+shamrat@shamrat:$ 
+
+shamrat@shamrat:$ docker network inspect br01
+[
+    {
+        "Name": "br01",
+        "Id": "0b181502091c9fa5a59049dc091e10c34ee35eab3a9ab6e494e38314409eac33",
+        "Created": "2025-06-26T11:45:11.753006405+06:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+
+shamrat@shamrat:$ docker run -dit --name web1 --network br01 nginx
+Unable to find image 'nginx:latest' locally
+latest: Pulling from library/nginx
+dad67da3f26b: Already exists 
+4eb3a9835b30: Pull complete 
+021db26e13de: Pull complete 
+397cc88dcd41: Pull complete 
+5f4a88bd8474: Pull complete 
+66467f827546: Pull complete 
+f05e87039331: Pull complete 
+Digest: sha256:dc53c8f25a10f9109190ed5b59bda2d707a3bde0e45857ce9e1efaa32ff9cbc1
+Status: Downloaded newer image for nginx:latest
+d8a8a4164485c0d0f9d91f6152a39177038aa93ec260e7dbc3b20cdebfe83519
+shamrat@shamrat:$ 
+shamrat@shamrat:$ docker run -dit --name web2 --network br01 nginx
+c00a9c0e30893646c037edcafe21f739e48b2647c33bc837e6ff7f12fe135e3f
+
