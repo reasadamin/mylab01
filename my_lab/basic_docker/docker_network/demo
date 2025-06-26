@@ -126,3 +126,52 @@ PING web1 (172.18.0.2) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.010/0.015/0.025/0.006 ms
 
 
+shamrat@shamrat:$ docker run -d -p 8080:80 --name web nginx
+e7be2ddacb4ca115e5080d997f91ce0fea1e23774847f45e0085c9f5a1fd84c8
+
+shamrat@shamrat:$ wget --spider -S http://localhost:8080 2>&1 | grep "HTTP/"
+  HTTP/1.1 200 OK
+
+
+
+============================================================================================
+Usecase demo
+============================================================================================
+shamrat@shamrat:$ docker network create \
+  --driver bridge \
+  --subnet 172.20.0.0/16 \
+  --ip-range 172.20.240.0/20 \
+  br02; date
+55478525b4eda824e6c30a73e08efd0cc304070f3b9934536a6383d3d4aec24b
+Thu Jun 26 12:13:50 PM +06 2025
+shamrat@shamrat:$ 
+
+shamrat@shamrat:$ docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+0b181502091c   br01      bridge    local
+55478525b4ed   br02      bridge    local
+45d527da9ad4   bridge    bridge    local
+db2d02314666   host      host      local
+db16aac0d356   none      null      local
+
+shamrat@shamrat:$ docker stop $(docker ps | awk 'NR>1 {print $1}')
+e7be2ddacb4c
+c00a9c0e3089
+d8a8a4164485
+
+shamrat@shamrat:$ docker run -dit --name app01 --network br02 nginx
+d5dcc6f7323f37623af106519ec95a00f90f5d33d58f8363e58137daad838012
+shamrat@shamrat:$ docker run -dit --name app02 --network br02 --ip 172.20.10.100 nginx
+814d7076113797172283b76d677ffe1ee2b2487d681efe59977deb6e71065dba
+shamrat@shamrat:$ 
+
+shamrat@shamrat:$ docker ps
+CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS     NAMES
+814d70761137   nginx     "/docker-entrypoint.…"   5 seconds ago    Up 4 seconds    80/tcp    app02
+d5dcc6f7323f   nginx     "/docker-entrypoint.…"   48 seconds ago   Up 48 seconds   80/tcp    app01
+shamrat@shamrat:$ 
+
+shamrat@shamrat:$ docker exec app01 hostname -I
+172.20.240.1 
+shamrat@shamrat:$ docker exec app02 hostname -I
+172.20.10.100 
