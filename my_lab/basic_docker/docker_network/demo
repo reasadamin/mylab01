@@ -82,7 +82,7 @@ d8a8a4164485   nginx     "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes
 shamrat@shamrat:$ docker exec -it web1 ping web2
 OCI runtime exec failed: exec failed: unable to start container process: exec: "ping": executable file not found in $PATH: unknown
 
-- ping connad was net there
+- ping connad was not there
 - need to install it (iputils-ping)
 
 shamrat@shamrat:$ docker exec -it web1 bash
