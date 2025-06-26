@@ -69,3 +69,60 @@ shamrat@shamrat:$
 shamrat@shamrat:$ docker run -dit --name web2 --network br01 nginx
 c00a9c0e30893646c037edcafe21f739e48b2647c33bc837e6ff7f12fe135e3f
 
+shamrat@shamrat:$ docker ps 
+CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS     NAMES
+c00a9c0e3089   nginx     "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes   80/tcp    web2
+d8a8a4164485   nginx     "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes   80/tcp    web1
+
+shamrat@shamrat:$ docker exec -it web1 ping web2
+OCI runtime exec failed: exec failed: unable to start container process: exec: "ping": executable file not found in $PATH: unknown
+
+shamrat@shamrat:$ docker exec -it web1 bash
+root@d8a8a4164485:/# 
+root@d8a8a4164485:/# uname -r
+6.2.0-39-generic
+root@d8a8a4164485:/# cat /etc/issue
+Debian GNU/Linux 12 \n \l
+
+root@d8a8a4164485:/# ping google.com
+bash: ping: command not found
+root@d8a8a4164485:/# ping 8.8.8.8
+bash: ping: command not found
+
+root@d8a8a4164485:/# apt update
+root@d8a8a4164485:/# apt upgrade
+root@d8a8a4164485:/# apt install iputils-ping
+root@d8a8a4164485:/# ping 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=108 time=48.3 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=108 time=47.7 ms
+
+root@d8a8a4164485:/# ping google.com
+PING google.com (64.233.170.139) 56(84) bytes of data.
+64 bytes from sg-in-f139.1e100.net (64.233.170.139): icmp_seq=1 ttl=97 time=48.1 ms
+64 bytes from sg-in-f139.1e100.net (64.233.170.139): icmp_seq=2 ttl=97 time=48.1 ms
+
+## do the same for web2
+
+shamrat@shamrat:$ docker exec -it web1 ping web2
+PING web2 (172.18.0.3) 56(84) bytes of data.
+64 bytes from web2.br01 (172.18.0.3): icmp_seq=1 ttl=64 time=0.037 ms
+64 bytes from web2.br01 (172.18.0.3): icmp_seq=2 ttl=64 time=0.013 ms
+64 bytes from web2.br01 (172.18.0.3): icmp_seq=3 ttl=64 time=0.013 ms
+^C
+--- web2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2028ms
+rtt min/avg/max/mdev = 0.013/0.021/0.037/0.011 ms
+shamrat@shamrat:$ 
+shamrat@shamrat:$ docker exec -it web2 ping web1
+PING web1 (172.18.0.2) 56(84) bytes of data.
+64 bytes from web1.br01 (172.18.0.2): icmp_seq=1 ttl=64 time=0.025 ms
+64 bytes from web1.br01 (172.18.0.2): icmp_seq=2 ttl=64 time=0.014 ms
+64 bytes from web1.br01 (172.18.0.2): icmp_seq=3 ttl=64 time=0.011 ms
+64 bytes from web1.br01 (172.18.0.2): icmp_seq=4 ttl=64 time=0.010 ms
+^C
+--- web1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3052ms
+rtt min/avg/max/mdev = 0.010/0.015/0.025/0.006 ms
+
+
