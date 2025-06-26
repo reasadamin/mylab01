@@ -1,0 +1,66 @@
+## Docker Network:
+
+bridge :	Default for standalone containers on a single host
+host :		Shares the host’s network stack
+none :		Disables networking
+overlay : 	For multi-host networking (Docker Swarm or Kubernetes)
+macvlan : 	Assigns MAC addresses to containers directly (LAN level integration)
+ipvlan : 	Similar to macvlan but uses IP layer
+
+## Commands:
+docker network ls [list the networks] 
+docker network inspect bridge [Inspect the bridge ]
+docker network create --driver bridge br01 [create a bridge network]
+
+docker run -dit --name web1 --network br01 nginx
+docker run -dit --name web2 --network br01 nginx
+
+docker exec -it web1 ping web2
+
+## Expose Ports to Host:
+You can expose ports from container to host:
+
+docker run -d -p 8080:80 --name web nginx
+
+Access it via browser: http://localhost:8080
+
+## Use Host Networking:
+In host networking, the container shares the host's network:
+
+docker run -d --network host nginx
+
+## Macvlan:
+For direct LAN access (containers get IPs on LAN):
+docker network create -d macvlan \
+  --subnet=192.168.1.0/24 \
+  --gateway=192.168.1.1 \
+  -o parent=eth0 my_macvlan
+Then launch a container on that network.
+
+
+## Use case:
+You're creating a custom bridge network (or an overlay if used with --driver overlay) with:
+A total subnet: 172.20.0.0/16
+ → Allows for 65,536 IP addresses (from 172.20.0.1 to 172.20.255.254)
+
+
+An IP range: 172.20.240.0/20
+ → Docker will dynamically assign container IPs only from this range (i.e., 172.20.240.0 to 172.20.255.255)
+
+
+Use Case: You want full control over the network layout — for example, reserving some of the subnet for static IP assignments and some for dynamic container IPs.
+
+## Solution:
+1. Create the network:
+docker network create \
+  --driver bridge \
+  --subnet 172.20.0.0/16 \
+  --ip-range 172.20.240.0/20 \
+  Multi-host-network
+
+2. Then run a container using it:
+docker run -dit --name test1 --network multi-host-network nginx
+
+3. To assign a static IP from outside the ip-range but still inside subnet:
+docker run -dit --name test2 --network multi-host-network \
+  --ip 172.20.10.100 nginx
