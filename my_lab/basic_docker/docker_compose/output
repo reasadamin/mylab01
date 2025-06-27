@@ -1,0 +1,128 @@
+shamrat@shamrat:$ docker compose up
+[+] Running 8/8
+ ✔ redis Pulled                                                                                                                                                             10.1s 
+   ✔ f18232174bc9 Pull complete                                                                                                                                              4.7s 
+   ✔ 3db14a52e194 Pull complete                                                                                                                                              4.7s 
+   ✔ f03ac91e0937 Pull complete                                                                                                                                              4.7s 
+   ✔ 3535ba13b4da Pull complete                                                                                                                                              4.9s 
+   ✔ 63ba5ae8d20d Pull complete                                                                                                                                              5.6s 
+   ✔ 4f4fb700ef54 Pull complete                                                                                                                                              5.6s 
+   ✔ 8493ebef02b7 Pull complete                                                                                                                                              5.6s 
+Compose can now delegate builds to bake for better performance.
+ To do so, set COMPOSE_BAKE=true.
+[+] Building 31.3s (14/14) FINISHED                                                                                                                                docker:default
+ => [web internal] load build definition from Dockerfile                                                                                                                     0.0s
+ => => transferring dockerfile: 331B                                                                                                                                         0.0s
+ => [web] resolve image config for docker-image://docker.io/docker/dockerfile:1                                                                                              4.0s
+ => [web] docker-image://docker.io/docker/dockerfile:1@sha256:9857836c9ee4268391bb5b09f9f157f3c91bb15821bb77969642813b0d00518d                                               2.8s
+ => => resolve docker.io/docker/dockerfile:1@sha256:9857836c9ee4268391bb5b09f9f157f3c91bb15821bb77969642813b0d00518d                                                         0.0s
+ => => sha256:9857836c9ee4268391bb5b09f9f157f3c91bb15821bb77969642813b0d00518d 8.40kB / 8.40kB                                                                               0.0s
+ => => sha256:176b5004df55ffa561c121dd12c0fad3ffe3c014318721c3c3d566008ce2627a 850B / 850B                                                                                   0.0s
+ => => sha256:a7a871c4f80fb0fd80a56efe8fc598eefc7be2ff7d36af617a31da498c779c68 1.26kB / 1.26kB                                                                               0.0s
+ => => sha256:724f0f61ffc85cf6ad0032c9063f7a74cd6d3590fd1138154820556e0a92073b 13.16MB / 13.16MB                                                                             2.7s
+ => => extracting sha256:724f0f61ffc85cf6ad0032c9063f7a74cd6d3590fd1138154820556e0a92073b                                                                                    0.1s
+ => [web internal] load metadata for docker.io/library/python:3.10-alpine                                                                                                    3.9s
+ => [web internal] load .dockerignore                                                                                                                                        0.0s
+ => => transferring context: 2B                                                                                                                                              0.0s
+ => [web 1/6] FROM docker.io/library/python:3.10-alpine@sha256:8d21601f9f531162bc0c37ae0ac9e7a070e512a6ae0ffc4090118866902c9caa                                              4.3s
+ => => resolve docker.io/library/python:3.10-alpine@sha256:8d21601f9f531162bc0c37ae0ac9e7a070e512a6ae0ffc4090118866902c9caa                                                  0.0s
+ => => sha256:8f3cddf76546dc236c84f3d7b63f41d06281a9b6df0a37196759312cf7990208 246B / 246B                                                                                   2.6s
+ => => sha256:8d21601f9f531162bc0c37ae0ac9e7a070e512a6ae0ffc4090118866902c9caa 10.30kB / 10.30kB                                                                             0.0s
+ => => sha256:c2f67dfa329910a4893eddc01df6e6516f1fe9b9d932fb6da7232cb713ae6408 1.74kB / 1.74kB                                                                               0.0s
+ => => sha256:15615c6a6182fe3c44528115104f98f21459541591a6e1ba10fd398304f77625 5.16kB / 5.16kB                                                                               0.0s
+ => => sha256:9ec82994db298b1da04d7e196f51be502d568436adb336b8f563f68976184355 460.22kB / 460.22kB                                                                           2.1s
+ => => sha256:9c0693031b932431257842c493b412250da3c9edc2d235b84d810c087a25d4ee 15.66MB / 15.66MB                                                                             4.0s
+ => => extracting sha256:9ec82994db298b1da04d7e196f51be502d568436adb336b8f563f68976184355                                                                                    0.0s
+ => => extracting sha256:9c0693031b932431257842c493b412250da3c9edc2d235b84d810c087a25d4ee                                                                                    0.2s
+ => => extracting sha256:8f3cddf76546dc236c84f3d7b63f41d06281a9b6df0a37196759312cf7990208                                                                                    0.0s
+ => [web internal] load build context                                                                                                                                        0.0s
+ => => transferring context: 1.06kB                                                                                                                                          0.0s
+ => [web 2/6] WORKDIR /code                                                                                                                                                  0.1s
+ => [web 3/6] RUN apk add --no-cache gcc musl-dev linux-headers                                                                                                             10.9s
+ => [web 4/6] COPY requirements.txt requirements.txt                                                                                                                         0.0s 
+ => [web 5/6] RUN pip install -r requirements.txt                                                                                                                            4.5s 
+ => [web 6/6] COPY . .                                                                                                                                                       0.1s 
+ => [web] exporting to image                                                                                                                                                 0.3s 
+ => => exporting layers                                                                                                                                                      0.3s 
+ => => writing image sha256:fe1067641114a23c1201df4e7a8c0a0a40b1af9af8829d6871046b6f6a4a2067                                                                                 0.0s 
+ => => naming to docker.io/library/simple_python_compose-web                                                                                                                 0.0s 
+ => [web] resolving provenance for metadata file                                                                                                                             0.0s 
+[+] Running 4/4
+ ✔ web                                      Built                                                                                                                            0.0s 
+ ✔ Network simple_python_compose_default    Created                                                                                                                          0.0s 
+ ✔ Container simple_python_compose-redis-1  Created                                                                                                                          0.0s 
+ ✔ Container simple_python_compose-web-1    Created                                                                                                                          0.0s 
+Attaching to redis-1, web-1
+redis-1  | Starting Redis Server
+redis-1  | 1:C 27 Jun 2025 08:30:20.730 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+redis-1  | 1:C 27 Jun 2025 08:30:20.730 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+redis-1  | 1:C 27 Jun 2025 08:30:20.730 * Redis version=8.0.2, bits=64, commit=00000000, modified=1, pid=1, just started
+redis-1  | 1:C 27 Jun 2025 08:30:20.730 * Configuration loaded
+redis-1  | 1:M 27 Jun 2025 08:30:20.730 * monotonic clock: POSIX clock_gettime
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * Running mode=standalone, port=6379.
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> RedisBloom version 8.0.1 (Git=unknown)
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> Registering configuration options: [
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ bf-error-rate       :      0.01 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ bf-initial-size     :       100 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ bf-expansion-factor :         2 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ cf-bucket-size      :         2 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ cf-initial-size     :      1024 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ cf-max-iterations   :        20 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ cf-expansion-factor :         1 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> 	{ cf-max-expansions   :        32 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * <bf> ]
+redis-1  | 1:M 27 Jun 2025 08:30:20.731 * Module 'bf' loaded from /usr/local/lib/redis/modules//redisbloom.so
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> Redis version found by RedisSearch : 8.0.2 - oss
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> RediSearch version 8.0.1 (Git=5688fcc)
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> Low level api version 1 initialized successfully
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> gc: ON, prefix min length: 2, min word length to stem: 4, prefix max expansions: 200, query timeout (ms): 500, timeout policy: return, cursor read size: 1000, cursor max idle (ms): 300000, max doctable size: 1000000, max number of search results:  1000000, 
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> Initialized thread pools!
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> Disabled workers threadpool of size 0
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> Subscribe to config changes
+redis-1  | 1:M 27 Jun 2025 08:30:20.732 * <search> Enabled role change notification
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <search> Cluster configuration: AUTO partitions, type: 0, coordinator timeout: 0ms
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <search> Register write commands
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * Module 'search' loaded from /usr/local/lib/redis/modules//redisearch.so
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> RedisTimeSeries version 80001, git_sha=577bfa8b5909e7ee572f0b651399be8303dc6641
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> Redis version found by RedisTimeSeries : 8.0.2 - oss
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> Registering configuration options: [
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-compaction-policy   :              }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-num-threads         :            3 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-retention-policy    :            0 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-duplicate-policy    :        block }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-chunk-size-bytes    :         4096 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-encoding            :   compressed }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-ignore-max-time-diff:            0 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> 	{ ts-ignore-max-val-diff :     0.000000 }
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> ]
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <timeseries> Detected redis oss
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * Module 'timeseries' loaded from /usr/local/lib/redis/modules//redistimeseries.so
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Created new data type 'ReJSON-RL'
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> version: 80001 git sha: unknown branch: unknown
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Exported RedisJSON_V1 API
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Exported RedisJSON_V2 API
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Exported RedisJSON_V3 API
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Exported RedisJSON_V4 API
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Exported RedisJSON_V5 API
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Enabled diskless replication
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * <ReJSON> Initialized shared string cache, thread safe: false.
+redis-1  | 1:M 27 Jun 2025 08:30:20.733 * Module 'ReJSON' loaded from /usr/local/lib/redis/modules//rejson.so
+redis-1  | 1:M 27 Jun 2025 08:30:20.734 * <search> Acquired RedisJSON_V5 API
+redis-1  | 1:M 27 Jun 2025 08:30:20.734 * Server initialized
+redis-1  | 1:M 27 Jun 2025 08:30:20.734 * Ready to accept connections tcp
+web-1    |  * Serving Flask app 'app.py'
+web-1    |  * Debug mode: on
+web-1    | WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+web-1    |  * Running on all addresses (0.0.0.0)
+web-1    |  * Running on http://127.0.0.1:5000
+web-1    |  * Running on http://172.19.0.2:5000
+web-1    | Press CTRL+C to quit
+web-1    |  * Restarting with stat
+web-1    |  * Debugger is active!
+web-1    |  * Debugger PIN: 533-777-452
+web-1    | 172.19.0.1 - - [27/Jun/2025 08:33:40] "GET / HTTP/1.1" 200 -
+
+
+shamrat@shamrat:$ curl http://localhost:8000; date
+Hello World! I have been seen 2 times.
+Fri Jun 27 02:34:28 PM +06 2025
