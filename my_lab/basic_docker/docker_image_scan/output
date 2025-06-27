@@ -1,0 +1,82 @@
+root@shamrat:# curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+aquasecurity/trivy info checking GitHub for latest tag
+aquasecurity/trivy info found version: 0.63.0 for v0.63.0/Linux/64bit
+aquasecurity/trivy info installed /usr/local/bin/trivy
+
+
+shamrat@shamrat:$ bash scan.sh 
+[*] Building Docker image: trivy-demo
+[+] Building 8.9s (10/10) FINISHED                                                                                                                                 docker:default
+ => [internal] load build definition from dockerfile                                                                                                                         0.0s
+ => => transferring dockerfile: 203B                                                                                                                                         0.0s
+ => [internal] load metadata for docker.io/library/python:3.9-slim                                                                                                           1.7s
+ => [internal] load .dockerignore                                                                                                                                            0.0s
+ => => transferring context: 2B                                                                                                                                              0.0s
+ => [1/5] FROM docker.io/library/python:3.9-slim@sha256:a40cf9eba2c3ed9226afa9ace504f07ad30fe831343bb1c69f7a6707aadb7c21                                                     3.0s
+ => => resolve docker.io/library/python:3.9-slim@sha256:a40cf9eba2c3ed9226afa9ace504f07ad30fe831343bb1c69f7a6707aadb7c21                                                     0.0s
+ => => sha256:20a97c0d8fc11f8337ff080be3f192c7211a0b7d1e6b886d6d2cff6674761652 3.51MB / 3.51MB                                                                               2.7s
+ => => sha256:cd1e1b7e12d38cac4095e7ea4f161334542f130d381d6ef2013fa1ac01b4b6b0 14.94MB / 14.94MB                                                                             2.5s
+ => => sha256:ea13ebdb5390b4e3fa5651d1daf14e6756a134f9a168fbedde44f02b1cee5fa8 250B / 250B                                                                                   2.6s
+ => => sha256:a40cf9eba2c3ed9226afa9ace504f07ad30fe831343bb1c69f7a6707aadb7c21 10.41kB / 10.41kB                                                                             0.0s
+ => => sha256:78cf9008e07b75b10639f04d47f64ee5a0e65ae794e704123462a0aea0bd4e68 1.75kB / 1.75kB                                                                               0.0s
+ => => sha256:07f17bb34a51732d91685dea8f43319a3799414e49e54b6b25fc8985debe91b6 5.29kB / 5.29kB                                                                               0.0s
+ => => extracting sha256:20a97c0d8fc11f8337ff080be3f192c7211a0b7d1e6b886d6d2cff6674761652                                                                                    0.0s
+ => => extracting sha256:cd1e1b7e12d38cac4095e7ea4f161334542f130d381d6ef2013fa1ac01b4b6b0                                                                                    0.2s
+ => => extracting sha256:ea13ebdb5390b4e3fa5651d1daf14e6756a134f9a168fbedde44f02b1cee5fa8                                                                                    0.0s
+ => [internal] load build context                                                                                                                                            0.0s
+ => => transferring context: 62B                                                                                                                                             0.0s
+ => [2/5] WORKDIR /app                                                                                                                                                       0.1s
+ => [3/5] COPY requirements.txt .                                                                                                                                            0.0s
+ => [4/5] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                 3.9s
+ => [5/5] COPY app.py .                                                                                                                                                      0.0s
+ => exporting to image                                                                                                                                                       0.1s
+ => => exporting layers                                                                                                                                                      0.1s
+ => => writing image sha256:a43cb93090be090efe13b5a9ec881f3aa273a22392bab1fcbcdbb9a674970aba                                                                                 0.0s 
+ => => naming to docker.io/library/trivy-demo                                                                                                                                0.0s 
+[*] Running Trivy scan...                                                                                                                                                         
+2025-06-27T16:41:13+06:00	INFO	[vuln] Vulnerability scanning is enabled
+2025-06-27T16:41:13+06:00	INFO	[secret] Secret scanning is enabled
+2025-06-27T16:41:13+06:00	INFO	[secret] If your scanning is slow, please try '--scanners vuln' to disable secret scanning
+2025-06-27T16:41:13+06:00	INFO	[secret] Please see also https://trivy.dev/v0.63/docs/scanner/secret#recommendation for faster secret detection
+2025-06-27T16:41:13+06:00	INFO	[python] Licenses acquired from one or more METADATA files may be subject to additional terms. Use `--debug` flag to see all affected packages.
+2025-06-27T16:41:13+06:00	INFO	Detected OS	family="debian" version="12.11"
+2025-06-27T16:41:13+06:00	INFO	[debian] Detecting vulnerabilities...	os_version="12" pkg_num=105
+2025-06-27T16:41:13+06:00	INFO	Number of language-specific files	num=1
+2025-06-27T16:41:13+06:00	INFO	[python-pkg] Detecting vulnerabilities...
+2025-06-27T16:41:13+06:00	WARN	Using severities from other vendors for some vulnerabilities. Read https://trivy.dev/v0.63/docs/scanner/vulnerability#severity-selection for details.
+2025-06-27T16:41:13+06:00	INFO	Table result includes only package filenames. Use '--format json' option to get the full path to the package file.
+
+Report Summary
+
+┌──────────────────────────────────────────────────────────────────────────────────┬────────────┬─────────────────┬─────────┐
+│                                      Target                                      │    Type    │ Vulnerabilities │ Secrets │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ trivy-demo (debian 12.11)                                                        │   debian   │       100       │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/Flask-2.1.0.dist-info/METADATA             │ python-pkg │        1        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/MarkupSafe-3.0.2.dist-info/METADATA        │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/click-8.1.8.dist-info/METADATA             │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/importlib_metadata-8.7.0.dist-info/METADA- │ python-pkg │        0        │    -    │
+│ TA                                                                               │            │                 │         │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/itsdangerous-2.2.0.dist-info/METADATA      │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/jinja2-3.1.6.dist-info/METADATA            │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/pip-23.0.1.dist-info/METADATA              │ python-pkg │        1        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/setuptools-58.1.0.dist-info/METADATA       │ python-pkg │        3        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/werkzeug-3.1.3.dist-info/METADATA          │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/wheel-0.45.1.dist-info/METADATA            │ python-pkg │        0        │    -    │
+├──────────────────────────────────────────────────────────────────────────────────┼────────────┼─────────────────┼─────────┤
+│ usr/local/lib/python3.9/site-packages/zipp-3.23.0.dist-info/METADATA             │ python-pkg │        0        │    -    │
+└──────────────────────────────────────────────────────────────────────────────────┴────────────┴─────────────────┴─────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
