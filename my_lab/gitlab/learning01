@@ -1,0 +1,83 @@
+Basic Structure:
+
+stages:
+    - stage1_name
+    - stage2_name
+
+variables:
+    variable1_name: "value"
+    variable2_name: 
+        - "value"
+        - description: "description of the variable"
+
+job1_name:
+    stage: <stage_name>
+    tags:
+        - <runner_name>
+    variables:
+        variable1_name: "value"
+        variable2_name: "value"
+    before_script:
+        - task1
+        - task2
+    after_script:
+        - task1
+        - task2
+    script:
+        - task1
+        - task2
+        - ./<bash_script_name.sh>
+        - echo "Hello World" > output/hello.txt
+        - pip install -r requirements.txt --cache-dir=~/.cache/pip
+    artifacts:
+        paths:
+            - output/
+        expire_in: 1 hour
+    cache:
+        paths:
+            - .cache/pip
+    rules:
+        - if: 
+    dependencies:
+        - job_name
+    when: manual/on_failure
+    environment: production/staging/qa
+
+
+
+
+Basic Syntax :
+
+1. stages x
+2. job name + script x
+3. image 
+4. before_script/ after_script
+5. needs 
+6. rules
+7. artifacts
+8. cache
+9. variables
+10. dependencies
+11. only:variables
+12. include
+13. extends
+14. only/except
+15. environment
+16. when: manual/ when:delayed - if we want run a job manually, or in some other conditions
+17. trigger
+18. matrix builds/ parallel
+19. Tags -  to specify the runner tag (that is available for the project)
+
+
+- create an empty project (during practice)
+- create a .gitlab-ci.yml file
+- create required docker file
+- then start writing codes in .gitlab-ci.yml file
+
+For regex:
+=~ if match
+!~ if not match
+
+For Logical:
+== equal
+!= not equal

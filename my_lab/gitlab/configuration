@@ -1,0 +1,81 @@
+Installation:
+
+https://www.atlantic.net/dedicated-server-hosting/how-to-install-gitlab-ce-on-ubuntu-22-04/
+
+cd /tmp
+curl -LO https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+ls -la
+ls -lt
+less /tmp/script.deb.sh
+sudo bash /tmp/script.deb.sh
+sudo ufw status
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw allow OpenSSH
+sudo ufw status
+sudo apt install gitlab-ce
+hostname
+vim /etc/gitlab/gitlab.rb
+sudo vim /etc/gitlab/gitlab.rb
+
+ sudo cat /etc/gitlab/gitlab.rb| grep "external_url"
+##! For more details on configuring external_url see:
+external_url 'http://shamrat-sb'
+
+gitlab-ctl reconfigure
+sudo gitlab-ctl reconfigure
+cat /etc/gitlab/initial_root_password
+sudo cat /etc/gitlab/initial_root_password
+history
+
+
+Install Runner:
+
+follow the page
+1. download the packages
+2. install
+3. register with gitlab project token
+
+[root@sb002 tmp]# curl -L "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.rpm.sh" | sudo bash
+systemctl status gitlab-runner
+wget https://s3.dualstack.us-east-1.amazonaws.com/gitlab-runner-downloads/latest/rpm/gitlab-runner_amd64.rpm
+[root@sb002 tmp]# dnf install -y /tmp/gitlab-runner_amd64.rpm
+[root@sb002 tmp]# systemctl status gitlab-runner
+ cat /etc/hosts [add the github server name and IP]
+ sudo gitlab-runner register -n --url http://shamrat-sb --registration-token glrt-cy0rGO5pf7XCHOnbTvls1G86MQpwOjEKdDozCnU6Mg8.01.1702h9d8s --executor docker --description "Deployment Runner" --docker-image "docker:stable" --tag-list deployment --docker-privileged
+
+====================================
+
+Runner & Executor:
+
+- have add a runner with gitlab
+- has to be a separate machine
+- has to install gitlag-runner libraries before registration
+- host based runner & project based runner, these are the 2 kinds of runner 
+- better to add hostbased runner, that will be available for all the projects
+- you can also add project based runner as well
+
+- Executor nedd to be selected during the time of runner registration
+- for basic learning and practice better to use bash executor
+- docker and other executor can also be selected 
+
+- you can also configure runner and executor separately, and use them by project basis
+
+
+[root@sb002 shamrat]# gitlab-runner register  --url http://shamrat-sb  --token glrt-TaG1H2v15Maox6TZCDi6S3Q6MQp1OjEH.01.0w1ud6pnj
+Runtime platform                                    arch=amd64 os=linux pid=7311 revision=4d7093e1 version=18.0.2
+Running in system-mode.                            
+                                                   
+Enter the GitLab instance URL (for example, https://gitlab.com/):
+[http://shamrat-sb]: 
+Verifying runner... is valid                        runner=TaG1H2v15
+
+Enter a name for the runner. This is stored only in the local config.toml file:
+[sb002.myguest.virtualbox.org]: 
+
+Enter an executor: parallels, docker+machine, docker-autoscaler, instance, docker-windows, kubernetes, custom, shell, ssh, virtualbox, docker:
+shell
+Runner registered successfully. Feel free to start it, but if it's running already the config should be automatically reloaded!
+ 
+Configuration (with the authentication token) was saved in "/etc/gitlab-runner/config.toml"
+

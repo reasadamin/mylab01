@@ -1,0 +1,54 @@
+stages:
+  - first
+  - second
+  - third
+  - forth
+
+variables:
+  GREETINGS: "Printing Global Variable: Hello World"
+  pattern: '/^ab.*/'
+
+before_script:
+  - echo "Before Script - shamrat"
+
+after_script:
+  - echo "After Script - shamrat"
+
+first_job:
+  stage: first
+  variables:
+    HELLO1: "Printing Local Variable: from first job"
+  script:
+    - echo "Hello from first job! -- shamrat"
+    - pwd
+    - echo "$GREETINGS"
+    - echo "$HELLO1"
+    - echo "bye"
+  
+
+second_job:
+  stage: second
+  before_script:
+    - echo "Printing before script from second job"
+  after_script:
+    - echo "Printing after script from second job"
+  variables:
+    HELLO2: "Printing Local variable: from second job"
+  script:
+    - echo "Hello from second job!"
+    - ls -l
+    - echo "$HELLO2"
+
+run_script:
+  stage: third
+  script:
+    - ./my_first_cicd.sh
+
+regx_matching:
+  stage: forth
+  variables:
+    teststring: 'abcd'
+  script: echo "This job will run, regex matched!!"
+  rules:
+    - if: '$teststring =~ $pattern'
+
