@@ -1,0 +1,57 @@
+shamrat@shamrat:$ date;docker compose up -d
+Sun Jun 29 11:58:28 AM +06 2025
+WARN[0000] /home/shamrat/my-git-projects/github_my_lab/mylab01/my_lab/basic_docker/docker_monitoring/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] Running 30/30
+ ✔ grafana Pulled                                                                                                                                                           50.7s 
+   ✔ f18232174bc9 Already exists                                                                                                                                             0.0s 
+   ✔ 9183b65e90ee Pull complete                                                                                                                                              5.4s 
+   ✔ 3f8d5c908dcc Pull complete                                                                                                                                              6.7s 
+   ✔ 30bb92ff0608 Pull complete                                                                                                                                              8.5s 
+   ✔ 807a2e881ecd Pull complete                                                                                                                                              8.9s 
+   ✔ 4a4d0948b0bf Pull complete                                                                                                                                              9.1s 
+   ✔ 04f6155c873d Pull complete                                                                                                                                             43.8s 
+   ✔ 85dde7dceb0a Pull complete                                                                                                                                             44.9s 
+   ✔ 7009d5001b77 Pull complete                                                                                                                                             44.9s 
+   ✔ 538deb30e80c Pull complete                                                                                                                                             44.9s 
+ ✔ cadvisor Pulled                                                                                                                                                           8.5s 
+   ✔ 619be1103602 Pull complete                                                                                                                                              1.4s 
+   ✔ 3b8469b194b8 Pull complete                                                                                                                                              2.3s 
+   ✔ 6361eeb1639c Pull complete                                                                                                                                              2.4s 
+   ✔ 4f4fb700ef54 Pull complete                                                                                                                                              2.4s 
+   ✔ 902eccca70f3 Pull complete                                                                                                                                              5.9s 
+ ✔ prometheus Pulled                                                                                                                                                        59.1s 
+   ✔ 0185f950e16a Pull complete                                                                                                                                             42.3s 
+   ✔ 158b50c376bf Pull complete                                                                                                                                             51.4s 
+   ✔ d809dcb8449d Pull complete                                                                                                                                             51.4s 
+   ✔ ab5dc859c1b7 Pull complete                                                                                                                                             51.4s 
+   ✔ d8261d2395d6 Pull complete                                                                                                                                             51.4s 
+   ✔ 7bde2424dadc Pull complete                                                                                                                                             51.4s 
+   ✔ f1456f6dac0f Pull complete                                                                                                                                             51.4s 
+   ✔ 4d90f494fa79 Pull complete                                                                                                                                             51.4s 
+ ✔ node_exporter Pulled                                                                                                                                                     12.0s 
+   ✔ 9fa9226be034 Pull complete                                                                                                                                              4.0s 
+   ✔ 1617e25568b2 Pull complete                                                                                                                                              4.1s 
+   ✔ c6e37428e3b3 Pull complete                                                                                                                                              7.5s 
+[+] Running 5/5
+ ✔ Network docker_monitoring_default            Created                                                                                                                      0.0s 
+ ✔ Container docker_monitoring-node_exporter-1  Started                                                                                                                      0.6s 
+ ✔ Container cadvisor                           Started                                                                                                                      0.6s 
+ ✔ Container prometheus                         Started                                                                                                                      0.6s 
+ ✔ Container grafana                            Started                                                                                                                      0.6s 
+shamrat@shamrat:$ 
+
+
+
+Grafana	http://localhost:3000	admin / admin
+Prometheus	http://localhost:9090	
+cAdvisor	http://localhost:8080
+
+Login to Grafana: http://localhost:3000
+Add Prometheus as a Data Source:
+URL: http://ip:9090 [do not use hostname/localhost, that will give an error]
+Save & Test
+
+Import a dashboard:
+Click + > Import
+Use ID: 193 (cAdvisor Docker dashboard)
+Select Prometheus as the data source
