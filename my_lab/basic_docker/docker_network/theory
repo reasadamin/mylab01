@@ -56,11 +56,11 @@ docker network create \
   --driver bridge \
   --subnet 172.20.0.0/16 \
   --ip-range 172.20.240.0/20 \
-  Multi-host-network
+  br02
 
 2. Then run a container using it:
-docker run -dit --name test1 --network multi-host-network nginx
+docker run -dit --name app01 --network br02 nginx
 
 3. To assign a static IP from outside the ip-range but still inside subnet:
-docker run -dit --name test2 --network multi-host-network \
+docker run -dit --name app02 --network br02 \
   --ip 172.20.10.100 nginx
