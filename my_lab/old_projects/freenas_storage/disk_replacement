@@ -1,0 +1,127 @@
+
+1. See the zpool status first
+    #zpool status -v
+    #zpool status vol1
+
+- This command will show the status of the pool along with the disk status within it.
+but dist label will be on 'gptid' (gptid/5f77455a-826a-11e7-b3f2-0cc47adf3498)
+
+2. then use 'glabel list' command, that will show the label of disks
+
+- find out the 'Geaom name'(Geom name: da10p1) of the disk according to 'gptid' that we got in the previous output. 
+- We have to find the Geom name to do all other things, now we can run 'smartctl' command over that name.
+
+3. Or we can use 'geom disk list' also to list the disks
+    # geom disk list
+    Geom name: da12
+    Providers:
+    1. Name: da12
+       Mediasize: 3000592982016 (2.7T)
+       Sectorsize: 512
+       Stripesize: 4096
+       Stripeoffset: 0
+       Mode: r1w1e3
+       descr: ATA WDC WD30EZRZ-00Z
+       lunid: 50014ee26311ca9f
+       ident: WD-WCC4N6DLPZL1
+       rotationrate: 5400
+       fwsectors: 63
+       fwheads: 255
+
+- Here 'ident:' is the disk serial number
+- We need this to identify the physical slot number where the disk is connected in the disk bay.
+
+4. Following are the command to run the SMART test on disk,
+    #smartctl -t short /dev/da10[It takes 2 min to complet the test]
+    #smartctl -t long /dev/da10 
+    #smartctl -a /dev/da10 [Show results]
+
+SMART Self-test log structure revision number 1
+Num  Test_Description    Status                  Remaining  LifeTime(hours)  LBA_of_first_error
+# 1  Short offline       Completed without error       00%     12989         -
+# 2  Short offline       Completed without error       00%     12989         -
+# 3  Short offline       Completed: read failure       90%     11694         82299803
+
+
+5. Following are the commands to run the IO test
+    #iostat da10
+    #gstat -f da10 -I 1000ms [IO status shows 1 sec interval]
+
+Now, from the web GUI,
+storage> Volumes> vol1> volume status(at the bottom) > replace> select disk> ok
+
+6. run, zpool status vol1
+
+         replacing-2                                 REMOVED      0     0     0
+	     11250354014881780653                        REMOVED      0     0     0  was /dev/gptid/5b66a92b-a29e-11e7-8d87-0cc47adf3498
+	     gptid/225b997c-197f-11ea-a0d4-0cc47adf3498  ONLINE       0     0     0  (resilvering)
+
+
+
+===============================================================================
+dec18,2019:
+error: vol1, da12p2, slot-17
+
+
+
+===============================================================================
+
+#glabel list
+
+    Geom name: da10p1
+    Providers:
+    1. Name: gptid/590bb4a5-a29e-11e7-8d87-0cc47adf3498
+       Mediasize: 2147483648 (2.0G)
+       Sectorsize: 512
+       Stripesize: 4096
+       Stripeoffset: 0
+       Mode: r0w0e0
+       secoffset: 0
+       offset: 0
+       seclength: 4194304
+       length: 2147483648
+       index: 0
+    Consumers:
+    1. Name: da10p1
+       Mediasize: 2147483648 (2.0G)
+       Sectorsize: 512
+       Stripesize: 4096
+       Stripeoffset: 0
+       Mode: r0w0e0
+
+
+3. 
+
+197  #smartctl -a /dev/da10
+    - HDD phycial info
+    - SMART test results
+    
+
+    --- SMART Test Commands ---
+
+  #smartctl -t short /dev/da10 [Start short test]
+  #smartctl -t long /dev/da10 [Start long test]
+  #smartctl -a /dev/da10 [Show results]
+  #geom disk list
+
+
+
+
+    --- iostat ---
+
+  #iostat da10
+
+    [root@nas01-bd ~]# iostat da11
+           tty            da11             cpu
+     tin  tout  KB/t tps  MB/s  us ni sy in id
+       0     0 17.49  15  0.25   0  0  0  0 100
+
+
+  #gstat -f da10 -I 1000ms [IO status shows 1 sec interval]
+
+
+    dT: 1.064s  w: 1.000s  filter: da10
+     L(q)  ops/s    r/s   kBps   ms/r    w/s   kBps   ms/w   %busy Name
+        0      0      0      0    0.0      0      0    0.0    0.0| da10
+        0      0      0      0    0.0      0      0    0.0    0.0| da10p1
+        0      0      0      0    0.0      0      0    0.0    0.0| da10p2

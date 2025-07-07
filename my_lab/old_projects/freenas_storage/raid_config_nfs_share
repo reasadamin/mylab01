@@ -1,0 +1,81 @@
+Basic Configuration & Operations of FreeNas
+
+Raid Configuration:
+	Storage > volume manager > window will open, then 
+Give the volume name
+Click on (+) Available disks
+Select disks by dragging from Volume Layout
+Select RaidZ2
+Click Add volume
+
+
+Recommendations from freenas:
+Using more than 12 disks per vdev is not recommended. The recommended number of disks per vdev is between 3 and 9. 
+If you have more disks, use multiple vdevs.
+RAIDZ1 is not recommended for drives over 1 TB in size.
+
+For this reason we’ve create 2 vdevs (vol1 & vol2), each containing 11 disks.
+
+
+ 2. After that we need to create Dataset within the volumes to create different shars,
+Click on Storage> Create dataset > a window will open, 
+
+then click on Advanced Mode
+
+Give the Dataset Name then Quota for this dataset(ie. 50TiB) and left everything default
+
+Then click Add Dataset
+
+
+
+Create your required Datasets as per the requirements.
+
+
+3. Now we need to create Shares, to do so
+
+Click on Sharing> Unix(NFS) > Add Unix(NFS) share
+
+A window will open, then click on Advanced Mode 
+
+Browse the path of Dataset that you’ve create for this share
+
+Write the description of the share on Comment
+
+Mention the Authorised Network
+
+Mention the Authorised IP address of host
+
+Maproot User: root
+Maproot Group: wheel
+
+Click ok
+
+
+Create Shares as the requirements,
+
+
+To mount on server:
+
+Vim /etc/fstab
+
+# NFS share from freenas for testing
+hermes:/mnt/vol1/team_share01/operations     /freenas-nfs04    nfs      rw,bg,hard,nointr,rsize=65536,wsize=65536,tcp,nfsvers=3,timeo=600,actimeo=700,acregmin=3,lock,suid      
+
+
+[root@plau ~]# showmount -e hermes
+Export list for hermes:
+/mnt/vol1/team_share01/design     192.168.54.0
+/mnt/vol1/team_share01/operations 192.168.54.0
+
+[root@plau ~]# mount -v /freenas-nfs04
+mount.nfs: trying text-based options 'bg,hard,nointr,rsize=65536,wsize=65536,tcp,nfsvers=3,timeo=600,actimeo=700,acregmin=3,lock,addr=192.168.51.87'
+mount.nfs: prog 100003, trying vers=3, prot=6
+mount.nfs: trying 192.168.51.87 prog 100003 vers 3 prot TCP port 2049
+mount.nfs: prog 100005, trying vers=3, prot=6
+mount.nfs: trying 192.168.51.87 prog 100005 vers 3 prot TCP port 625
+hermes:/mnt/vol1/team_share01/operations on /freenas-nfs04 type nfs (rw,bg,hard,nointr,rsize=65536,wsize=65536,tcp,nfsvers=3,timeo=600,actimeo=700,acregmin=3,lock)
+
+[root@plau ~]# df -h
+Filesystem            Size  Used Avail Use% Mounted on
+hermes:/mnt/vol1/team_share01/operations
+                      3.0T  192K  3.0T   1% /freenas-nfs04
