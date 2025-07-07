@@ -1,0 +1,711 @@
+patching oracle database:
+
+1. download the patch zip file from the oracle site
+
+2. check the opatch version from the readme file or download the latest one
+
+3. replace latest opatch in the $ORACLE_HOME
+
+3.1 add path to .bash_profile
+    PATH=$PATH:$HOME/bin:$ORACLE_HOME/bin:$ORACLE_HOME/OPatch:/bin
+
+4. unzip the patch zip
+
+5. enter the folder
+
+6. run opatch prereq script
+
+7. if okay, then run opatch apply
+
+8. after completion, startup the db with sqlplus, then exit
+
+9. run ./datapatch -verbose from cd $ORACLE_HOME/opatch directory
+
+10. finally run 'opatch lspatches'
+
+[oracle@primedb01-tb 28689146]$ ls -l
+total 32
+drwxr-xr-x 19 oracle oinstall  4096 Oct  8 09:11 28259833
+drwxr-xr-x  4 oracle oinstall  4096 Sep 12 16:15 28440711
+-rw-rw-r--  1 oracle oinstall 20886 Oct 26 03:20 README.html
+[oracle@primedb01-tb 28689146]$ 
+[oracle@primedb01-tb 28689146]$ 
+[oracle@primedb01-tb 28689146]$ cd 28259833
+[oracle@primedb01-tb 28259833]$ ls -l
+total 148
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 19769480
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 20299023
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:12 20831110
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:12 21359755
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:12 21948354
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:12 22291127
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 23054246
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:12 24006101
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:12 24732082
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 25171037
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 25755742
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 26609783
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:12 26713565
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 26925311
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 27338041
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 27547329
+drwxr-x--- 4 oracle oinstall  4096 Oct  8 09:11 28259833
+-rw-rw-r-- 1 oracle oinstall 74685 Oct 12 10:22 README.html
+-rw-r--r-- 1 oracle oinstall    21 Oct  8 09:11 README.txt
+[oracle@primedb01-tb 28259833]$ opatch prereq CheckConflictAgainstOHWithDetail -ph ./
+Oracle Interim Patch Installer version 12.2.0.1.16
+Copyright (c) 2018, Oracle Corporation.  All rights reserved.
+
+PREREQ session
+
+Oracle Home       : /oracle/app/oracle/product/12.1.0/dbhome_1
+Central Inventory : /oracle/app/oraInventory
+   from           : /oracle/app/oracle/product/12.1.0/dbhome_1/oraInst.loc
+OPatch version    : 12.2.0.1.16
+OUI version       : 12.1.0.2.0
+Log file location : /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-00-43AM_1.log
+
+Invoking prereq "checkconflictagainstohwithdetail"
+
+Prereq "checkConflictAgainstOHWithDetail" passed.
+
+OPatch succeeded.
+[oracle@primedb01-tb 28259833]$ opatch apply
+
+
+
+
+
+
+
+
+
+
+
+[oracle@primedb01-tb 28259833]$ opatch apply
+Oracle Interim Patch Installer version 12.2.0.1.16
+Copyright (c) 2018, Oracle Corporation.  All rights reserved.
+
+
+Oracle Home       : /oracle/app/oracle/product/12.1.0/dbhome_1
+Central Inventory : /oracle/app/oraInventory
+   from           : /oracle/app/oracle/product/12.1.0/dbhome_1/oraInst.loc
+OPatch version    : 12.2.0.1.16
+OUI version       : 12.1.0.2.0
+Log file location : /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-01-24AM_1.log
+
+Verifying environment and performing prerequisite checks...
+
+--------------------------------------------------------------------------------
+Start OOP by Prereq process.
+Launch OOP...
+
+Oracle Interim Patch Installer version 12.2.0.1.16
+Copyright (c) 2018, Oracle Corporation.  All rights reserved.
+
+
+Oracle Home       : /oracle/app/oracle/product/12.1.0/dbhome_1
+Central Inventory : /oracle/app/oraInventory
+   from           : /oracle/app/oracle/product/12.1.0/dbhome_1/oraInst.loc
+OPatch version    : 12.2.0.1.16
+OUI version       : 12.1.0.2.0
+Log file location : /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-01-32AM_1.log
+
+Verifying environment and performing prerequisite checks...
+Prerequisite check "CheckActiveFilesAndExecutables" failed.
+The details are:
+
+
+Following active executables are not used by opatch process :
+/oracle/app/oracle/product/12.1.0/dbhome_1/lib/libclntsh.so.12.1
+
+Following active executables are used by opatch process :
+
+UtilSession failed: Prerequisite check "CheckActiveFilesAndExecutables" failed.
+Log file location: /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-01-32AM_1.log
+
+OPatch failed with error code 73
+[oracle@primedb01-tb 28259833]$ ps -ef | grep oracle
+oracle    2782     1  0 Nov25 ?        00:00:06 /oracle/app/oracle/product/12.1.0/dbhome_1/bin/tnslsnr LISTENER -inherit
+root     19354  2539  0 04:16 ?        00:00:00 sshd: oracle [priv]
+oracle   19356 19354  0 04:16 ?        00:00:00 sshd: oracle@pts/0
+oracle   19357 19356  0 04:16 pts/0    00:00:00 -bash
+oracle   21570 19357  0 05:01 pts/0    00:00:00 ps -ef
+oracle   21571 19357  0 05:01 pts/0    00:00:00 grep oracle
+[oracle@primedb01-tb 28259833]$ cd
+[oracle@primedb01-tb ~]$ lsnrctl status
+
+LSNRCTL for Linux: Version 12.1.0.2.0 - Production on 27-NOV-2018 05:02:13
+
+Copyright (c) 1991, 2014, Oracle.  All rights reserved.
+
+Connecting to (ADDRESS=(PROTOCOL=tcp)(HOST=)(PORT=1521))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 12.1.0.2.0 - Production
+Start Date                25-NOV-2018 03:48:58
+Uptime                    2 days 1 hr. 13 min. 14 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Log File         /oracle/app/oracle/diag/tnslsnr/primedb01-tb/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=primedb01-tb.therap.net)(PORT=1521)))
+The listener supports no services
+The command completed successfully
+[oracle@primedb01-tb ~]$ lsnrctl stop
+
+LSNRCTL for Linux: Version 12.1.0.2.0 - Production on 27-NOV-2018 05:02:18
+
+Copyright (c) 1991, 2014, Oracle.  All rights reserved.
+
+Connecting to (ADDRESS=(PROTOCOL=tcp)(HOST=)(PORT=1521))
+The command completed successfully
+[oracle@primedb01-tb ~]$ 
+[oracle@primedb01-tb ~]$ 
+[oracle@primedb01-tb ~]$ 
+[oracle@primedb01-tb ~]$ 
+[oracle@primedb01-tb ~]$ ls
+28689146  opatch_p6880880_180000_Linux-x86-64.zip  p28689146_121020_Linux-x86-64.zip  PatchSearch.xml  spacewalkDB
+OPatch    oraInventory                             p6880880_121010_Linux-x86-64.zip   scripts          spacewalkDB.tar.gz
+[oracle@primedb01-tb ~]$ cd 28689146
+[oracle@primedb01-tb 28689146]$ 
+[oracle@primedb01-tb 28689146]$ ls
+28259833  28440711  README.html
+[oracle@primedb01-tb 28689146]$ cd 28259833
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ ls
+19769480  20831110  21948354  23054246  24732082  25755742  26713565  27338041  28259833     README.txt
+20299023  21359755  22291127  24006101  25171037  26609783  26925311  27547329  README.html
+[oracle@primedb01-tb 28259833]$ opatch apply
+Oracle Interim Patch Installer version 12.2.0.1.16
+Copyright (c) 2018, Oracle Corporation.  All rights reserved.
+
+
+Oracle Home       : /oracle/app/oracle/product/12.1.0/dbhome_1
+Central Inventory : /oracle/app/oraInventory
+   from           : /oracle/app/oracle/product/12.1.0/dbhome_1/oraInst.loc
+OPatch version    : 12.2.0.1.16
+OUI version       : 12.1.0.2.0
+Log file location : /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-02-57AM_1.log
+
+Verifying environment and performing prerequisite checks...
+OPatch continues with these patches:   19769480  20299023  20831110  21359755  21948354  22291127  23054246  24006101  24732082  25171037  25755742  26609783  26713565  26925311  27338041  27547329  28259833  
+
+Do you want to proceed? [y|n]
+y
+User Responded with: Y
+All checks passed.
+
+Please shutdown Oracle instances running out of this ORACLE_HOME on the local system.
+(Oracle Home = '/oracle/app/oracle/product/12.1.0/dbhome_1')
+
+
+Is the local system ready for patching? [y|n]
+y
+User Responded with: Y
+Backing up files...
+Applying sub-patch '19769480' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.rdbms.deconfig, 12.1.0.2.0...
+
+Patching component oracle.xdk, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms.util, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.xdk.parser.java, 12.1.0.2.0...
+
+Patching component oracle.oraolap, 12.1.0.2.0...
+
+Patching component oracle.xdk.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf.ic, 12.1.0.2.0...
+Applying sub-patch '20299023' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+ApplySession: Optional component(s) [ oracle.has.crs, 12.1.0.2.0 ]  not present in the Oracle Home or a higher version is found.
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms.deconfig, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf.ic, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf.ic, 12.1.0.2.0...
+Applying sub-patch '20831110' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.oraolap.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+Applying sub-patch '21359755' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.assistants.server, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+Applying sub-patch '21948354' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.rdbms.deconfig, 12.1.0.2.0...
+
+Patching component oracle.xdk, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.xdk.parser.java, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.xdk.rsf, 12.1.0.2.0...
+Applying sub-patch '22291127' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+ApplySession: Optional component(s) [ oracle.oid.client, 12.1.0.2.0 ]  not present in the Oracle Home or a higher version is found.
+
+Patching component oracle.ldap.rsf, 12.1.0.2.0...
+
+Patching component oracle.ldap.client, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.oraolap, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.oraolap.dbscripts, 12.1.0.2.0...
+Applying sub-patch '23054246' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.rdbms.dv, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf, 12.1.0.2.0...
+
+Patching component oracle.install.deinstalltool, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf.ic, 12.1.0.2.0...
+
+Patching component oracle.oracore.rsf, 12.1.0.2.0...
+
+Patching component oracle.ctx, 12.1.0.2.0...
+
+Patching component oracle.xdk, 12.1.0.2.0...
+
+Patching component oracle.nlsrtl.rsf, 12.1.0.2.0...
+
+Patching component oracle.xdk.parser.java, 12.1.0.2.0...
+
+Patching component oracle.ctx.atg, 12.1.0.2.0...
+Applying sub-patch '24006101' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.sqlplus, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.network.listener, 12.1.0.2.0...
+
+Patching component oracle.network.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dv, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.sqlplus.ic, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+Applying sub-patch '24732082' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.rdbms.install.plugins, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+Applying sub-patch '25171037' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.sqlplus.ic, 12.1.0.2.0...
+
+Patching component oracle.sqlplus, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.ordim.client, 12.1.0.2.0...
+
+Patching component oracle.ordim.client, 12.1.0.2.0...
+
+Patching component oracle.ordim.jai, 12.1.0.2.0...
+
+Patching component oracle.ordim.server, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.rdbms.install.plugins, 12.1.0.2.0...
+
+Patching component oracle.javavm.containers, 12.1.0.2.0...
+Applying sub-patch '25755742' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+ApplySession: Optional component(s) [ oracle.oid.client, 12.1.0.2.0 ] , [ oracle.has.crs, 12.1.0.2.0 ]  not present in the Oracle Home or a higher version is found.
+
+Patching component oracle.network.rsf, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf, 12.1.0.2.0...
+
+Patching component oracle.ldap.client, 12.1.0.2.0...
+
+Patching component oracle.oracore.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.deconfig, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.network.listener, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+Applying sub-patch '26609783' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.oracore.rsf, 12.1.0.2.0...
+Applying sub-patch '26713565' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+ApplySession: Optional component(s) [ oracle.oid.client, 12.1.0.2.0 ] , [ oracle.has.crs, 12.1.0.2.0 ]  not present in the Oracle Home or a higher version is found.
+
+Patching component oracle.ldap.client, 12.1.0.2.0...
+
+Patching component oracle.rdbms.crs, 12.1.0.2.0...
+
+Patching component oracle.rdbms.deconfig, 12.1.0.2.0...
+
+Patching component oracle.xdk, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.xdk.parser.java, 12.1.0.2.0...
+
+Patching component oracle.xdk.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+Applying sub-patch '26925311' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.network.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+Applying sub-patch '27338041' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+ApplySession: Optional component(s) [ oracle.assistants.asm, 12.1.0.2.0 ]  not present in the Oracle Home or a higher version is found.
+
+Patching component oracle.network.rsf, 12.1.0.2.0...
+
+Patching component oracle.assistants.server, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.sqlplus.rsf, 12.1.0.2.0...
+Applying sub-patch '27547329' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+
+Patching component oracle.network.rsf, 12.1.0.2.0...
+
+Patching component oracle.tfa, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.ldap.rsf, 12.1.0.2.0...
+
+Patching component oracle.ctx.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.oracore.rsf, 12.1.0.2.0...
+
+Patching component oracle.ctx, 12.1.0.2.0...
+
+Patching component oracle.nlsrtl.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+Applying sub-patch '28259833' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+ApplySession: Optional component(s) [ oracle.has.crs, 12.1.0.2.0 ]  not present in the Oracle Home or a higher version is found.
+
+Patching component oracle.oracore.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rsf, 12.1.0.2.0...
+
+Patching component oracle.rdbms.rman, 12.1.0.2.0...
+
+Patching component oracle.rdbms.crs, 12.1.0.2.0...
+
+OPatch found the word "error" in the stderr of the make command.
+Please look at this stderr. You can re-run this make command.
+Stderr output:
+chmod: changing permissions of `/oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO': Operation not permitted
+make: [iextjob] Error 1 (ignored)
+
+
+Composite patch 28259833 successfully applied.
+OPatch Session completed with warnings.
+Log file location: /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-02-57AM_1.log
+
+OPatch completed with warnings.
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ ls -la /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+-rwsr-x--- 1 root oinstall 1636324 Mar 14  2018 /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ ls -la /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+-rwsr-x--- 1 root oinstall 1636324 Mar 14  2018 /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ chown oracle: /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+chown: changing ownership of `/oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO': Operation not permitted
+[oracle@primedb01-tb 28259833]$ sudo chown oracle: /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+[sudo] password for oracle: 
+oracle is not in the sudoers file.  This incident will be reported.
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ ls -la /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+-rwxr-x--- 1 oracle oinstall 1636324 Mar 14  2018 /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ ls -la /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+-rwxr-xr-x 1 oracle oinstall 1636324 Mar 14  2018 /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+
+[root@primedb01-ta ~]# chown oracle: /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+[root@primedb01-ta ~]# chmod 755 /oracle/app/oracle/product/12.1.0/dbhome_1/bin/extjobO
+
+
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ relink all
+writing relink log to: /oracle/app/oracle/product/12.1.0/dbhome_1/install/relink.log
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ less /oracle/app/oracle/product/12.1.0/dbhome_1/install/relink.log
+[oracle@primedb01-tb 28259833]$ 
+[oracle@primedb01-tb 28259833]$ 
+
+[oracle@primedb01-tb 28259833]$ cd ..
+[oracle@primedb01-tb 28689146]$ 
+[oracle@primedb01-tb 28689146]$ 
+[oracle@primedb01-tb 28689146]$ ls
+28259833  28440711  README.html
+[oracle@primedb01-tb 28689146]$ cd 28440711
+[oracle@primedb01-tb 28440711]$ ls -l
+total 92
+drwxr-x--- 3 oracle oinstall  4096 Sep 12 16:15 etc
+drwxr-x--- 8 oracle oinstall  4096 Sep 12 16:15 files
+-rw-rw-r-- 1 oracle oinstall 78810 Oct 12 14:30 README.html
+-rw-r--r-- 1 oracle oinstall    26 Sep 12 16:15 README.txt
+[oracle@primedb01-tb 28440711]$ 
+[oracle@primedb01-tb 28440711]$ 
+[oracle@primedb01-tb 28440711]$ opatch apply
+Oracle Interim Patch Installer version 12.2.0.1.16
+Copyright (c) 2018, Oracle Corporation.  All rights reserved.
+
+
+Oracle Home       : /oracle/app/oracle/product/12.1.0/dbhome_1
+Central Inventory : /oracle/app/oraInventory
+   from           : /oracle/app/oracle/product/12.1.0/dbhome_1/oraInst.loc
+OPatch version    : 12.2.0.1.16
+OUI version       : 12.1.0.2.0
+Log file location : /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-16-47AM_1.log
+
+Verifying environment and performing prerequisite checks...
+OPatch continues with these patches:   28440711  
+
+Do you want to proceed? [y|n]
+y
+User Responded with: Y
+All checks passed.
+
+Please shutdown Oracle instances running out of this ORACLE_HOME on the local system.
+(Oracle Home = '/oracle/app/oracle/product/12.1.0/dbhome_1')
+
+
+Is the local system ready for patching? [y|n]
+y
+User Responded with: Y
+Backing up files...
+Applying interim patch '28440711' to OH '/oracle/app/oracle/product/12.1.0/dbhome_1'
+ApplySession: Optional component(s) [ oracle.sqlj, 12.1.0.2.0 ]  not present in the Oracle Home or a higher version is found.
+
+Patching component oracle.javavm.server, 12.1.0.2.0...
+
+Patching component oracle.javavm.server.core, 12.1.0.2.0...
+
+Patching component oracle.rdbms.dbscripts, 12.1.0.2.0...
+
+Patching component oracle.rdbms, 12.1.0.2.0...
+
+Patching component oracle.javavm.client, 12.1.0.2.0...
+
+Patching component oracle.dbjava.jdbc, 12.1.0.2.0...
+
+Patching component oracle.dbjava.ic, 12.1.0.2.0...
+Patch 28440711 successfully applied.
+Log file location: /oracle/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/opatch/opatch2018-11-27_05-16-47AM_1.log
+
+OPatch succeeded.
+[oracle@primedb01-tb 28440711]$ 
+[oracle@primedb01-tb 28440711]$ 
+[oracle@primedb01-tb 28440711]$ 
+[oracle@primedb01-tb 28440711]$ 
+
+[oracle@primedb01-tb ~]$ sqlplus / as sysdba
+
+SQL*Plus: Release 12.1.0.2.0 Production on Tue Nov 27 05:18:48 2018
+
+Copyright (c) 1982, 2014, Oracle.  All rights reserved.
+
+Connected to an idle instance.
+
+SQL> startup
+ORACLE instance started.
+
+Total System Global Area 9294577664 bytes
+Fixed Size		    2933640 bytes
+Variable Size		 1610615928 bytes
+Database Buffers	 7650410496 bytes
+Redo Buffers		   30617600 bytes
+Database mounted.
+Database opened.
+SQL> 
+SQL> 
+SQL> exit
+Disconnected from Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production
+With the Partitioning, OLAP, Advanced Analytics and Real Application Testing options
+[oracle@primedb01-tb ~]$ 
+[oracle@primedb01-tb ~]$ 
+[oracle@primedb01-tb ~]$ 
+
+[oracle@primedb01-tb ~]$ 
+[oracle@primedb01-tb ~]$ cd $ORACLE_HOME/OPatch
+[oracle@primedb01-tb OPatch]$ ./datapatch -verbose
+SQL Patching tool version 12.1.0.2.0 Production on Tue Nov 27 05:20:20 2018
+Copyright (c) 2012, 2016, Oracle.  All rights reserved.
+
+Log file for this invocation: /oracle/app/oracle/cfgtoollogs/sqlpatch/sqlpatch_26434_2018_11_27_05_20_20/sqlpatch_invocation.log
+
+Connecting to database...OK
+Bootstrapping registry and package to current versions...done
+Determining current state...done
+
+Current state of SQL patches:
+Patch 28440711 (Database PSU 12.1.0.2.181016, Oracle JavaVM Component (OCT2018)):
+  Installed in the binary registry only
+Bundle series PSU:
+  ID 181016 in the binary registry and not installed in the SQL registry
+
+Adding patches to installation queue and performing prereq checks...
+Installation queue:
+  Nothing to roll back
+  The following patches will be applied:
+    28440711 (Database PSU 12.1.0.2.181016, Oracle JavaVM Component (OCT2018))
+    28259833 (DATABASE PATCH SET UPDATE 12.1.0.2.181016)
+
+Installing patches...
+Patch installation complete.  Total patches installed: 2
+
+Validating logfiles...
+Patch 28440711 apply: SUCCESS
+  logfile: /oracle/app/oracle/cfgtoollogs/sqlpatch/28440711/22440644/28440711_apply_TBSPACEW_2018Nov27_05_20_31.log (no errors)
+Patch 28259833 apply: SUCCESS
+  logfile: /oracle/app/oracle/cfgtoollogs/sqlpatch/28259833/22488632/28259833_apply_TBSPACEW_2018Nov27_05_21_04.log (no errors)
+SQL Patching tool complete on Tue Nov 27 05:21:33 2018
+[oracle@primedb01-tb OPatch]$ cd
+[oracle@primedb01-tb ~]$ 
+
+[oracle@primedb01-tb ~]$ opatch lspatches
+28440711;Database PSU 12.1.0.2.181016, Oracle JavaVM Component (OCT2018)
+28259833;Database Patch Set Update : 12.1.0.2.181016 (28259833)
+
+OPatch succeeded.
+
+
+

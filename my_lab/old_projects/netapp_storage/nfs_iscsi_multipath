@@ -1,0 +1,512 @@
+NFS requirement for RAC environment : 
+
+NetApp part : 
+A three node RAC environment requires one 800 GB “/u00” NFS Partition on netapp. And Export file should have  the following permission enabled. 
+“Grant root access to all hosts”  and 
+“Enabled Setuid and Setgid executables” 
+
+
+Oracle Linux part:
+Here is the “/etc/fstab” entry : 
+
+netapp02-bd-e0c:/vol/Oracle_Binary_12C_RACDB04_20150921     /u00     nfs        rw,bg,hard,nointr,rsize=65536,wsize=65536,tcp,nfsvers=3,timeo=600,actimeo=700,acregmin=3,lock,suid
+
+
+iSCSI requirement for RAC environment : 
+
+
+RAC requires multiple LUNs for ASM Storage
+
+Linux Part : 
+
+Step 1 : Package installation :
+oracle-rdbms-server-12cR1-preinstall, nscd-2.12-1.166.el6_7.1.x86_64, kmod-oracleasm, oracleasm-support, iscsi-initiator-utils, cvuqdisk-1.0.9-1.rpm, oracleasmlib-2.0.4-1.el6.x86_64.rpm    
+
+
+Step 2 : 
+[root@racdb04bd ~]# service iscsid start
+[root@racdb04bd ~]# chkconfig iscsid on
+[shamrat@racdb04bd ~]$ chkconfig --list iscsi
+iscsi          	0:off	1:off	2:on	3:on	4:on	5:on	6:off
+
+Step 3 : Collect all  IQN numbers from the linux host. We will add those IQN in NetApp iGroup later. 
+
+[shamrat@racdb04bd ~]$ cat /etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.1988-12.com.oracle:2fb21773d18d
+
+[shamrat@racdb05bd ~]$ cat /etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.1988-12.com.oracle:33d68e58f8cd
+
+[shamrat@racdb06bd ~]$ cat /etc/iscsi/initiatorname.iscsi 
+InitiatorName=iqn.1988-12.com.oracle:5b2eceafcdfa
+
+Netapp Part : 
+
+Ster 1 : Create a Initiator Group or igroup:
+
+login in into OnCommand System Manager 
+Go  LUN > “Initiator Groups” > “Create”
+In General Tab 
+Write the name of the igroup ex “IGroup_RAC01_env ” 
+ select the Operating System “Linux”
+Select Type  “iSCSi”	
+Click “Create”
+
+Step 2 : Create iSCSI LUNs : 
+login in into OnCommand System Manager 
+Go to LUN > “LUN management Tab” > “Create” a Wizard will come Click Next 
+On General Properties Tab
+Write the name of the LUN “RAC_ASM01_iSCSI_LUN01”
+Select “TYPE” of the Operating System “Linux”
+Set the LUN size “1 TB” and click Next 
+
+On LUN Container Tab
+Choose the “Aggregate” and 
+Write the “vol” name “RAC_ASM01_iSCSI_LUN01_vol” 
+ “Click Next” button 
+On Initiators Mapping Tab
+Select the right igroup (IGroup_RAC01_env) we created on the  Step 1.
+Click “Next”
+
+On LUN Summary Tab
+Review the changes and click Next 
+
+Repeat the whole process multiple times to create multiple LUN for Oracle ASM.  
+
+  
+
+Step 3 : Add Linux host iqn to Initiator Group: 
+Collect iscsi initiator name from /etc/iscsi/initiatorname.iscsi file, (example : InitiatorName=iqn.1988-12.com.oracle:ebe1b6f6ba27) 
+Go  LUN > “Initiator Groups” Tab 
+Select the the Initiator group “IGroup_RAC01_env ” and then click “Edit”
+Now go to the Initiator Tab and add the IQN number/numbers to allow those machines to access the LUNs  
+
+
+
+Discover and add iSCSI LUNs on Linux hosts : 
+
+
+[root@racdb04bd ~]#  iscsiadm --mode discoverydb --type sendtargets --portal 10.49.49.123:3260 --discover
+OR
+[root@racdb07bd ~]# iscsiadm -m discovery -t sendtargets -p 10.49.49.124:3260
+
+Starting iscsid:                                           [  OK  ]
+10.49.49.124:3260,1003 iqn.1992-08.com.netapp:sn.536915029
+10.49.49.121:3260,1000 iqn.1992-08.com.netapp:sn.536915029
+10.49.49.122:3260,1001 iqn.1992-08.com.netapp:sn.536915029
+10.49.49.123:3260,1002 iqn.1992-08.com.netapp:sn.536915029
+10.49.49.125:3260,1004 iqn.1992-08.com.netapp:sn.536915029
+10.49.49.126:3260,1005 iqn.1992-08.com.netapp:sn.536915029
+
+
+
+Note: If all NetApp interfaces are configured to accept iSCSI requests and they are in the same Storage LAN then we will get multiple disk entries. We should remove those disks  by removing those targets.   
+
+[root@racdb04bd ~]#  fdisk -l 
+
+[root@racdb04bd ~]#  ls /var/lib/iscsi/nodes/
+
+[root@racdb04bd ~]#  ls /var/lib/iscsi/nodes/iqn.1992-08.com.netapp\:sn.536915029/
+[root@racdb04bd ~]#  ls -l /var/lib/iscsi/nodes/iqn.1992-08.com.netapp\:sn.536915029/
+
+[root@racdb04bd ~]#  iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915029 -p 10.49.49.121:3260 -o delete
+[root@racdb04bd ~]#  iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915029 -p 10.49.49.122:3260 -o delete
+[root@racdb04bd ~]#  iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915029 -p 10.49.49.124:3260 -o delete
+[root@racdb04bd ~]#  iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915029 -p 10.49.49.125:3260 -o delete
+[root@racdb04bd ~]#  iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915029 -p 10.49.49.126:3260 -o delete
+
+
+[root@racdb07bd ~]# chkconfig iscsi --list 
+iscsi          	0:off	1:off	2:off	3:on	4:on	5:on	6:off
+
+[root@racdb07bd ~]# service iscsi restart
+Stopping iscsi:                                            [  OK  ]
+Starting iscsi:                                            [  OK  ]
+[root@racdb07bd ~]# 
+[root@racdb07bd ~]# 
+[root@racdb07bd ~]# 
+[root@racdb07bd ~]# fdisk -l 
+
+Disk /dev/sda: 225.5 GB, 225485783040 bytes
+255 heads, 63 sectors/track, 27413 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x00080deb
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *           1       10444    83886080   83  Linux
+/dev/sda2           10444       11488     8388608   83  Linux
+/dev/sda3           11488       12533     8388608   83  Linux
+/dev/sda4           12533       27414   119536640    5  Extended
+/dev/sda5           12533       20887    67108864   82  Linux swap / Solaris
+/dev/sda6           20888       27414    52425728   83  Linux
+
+Disk /dev/sdb: 16.1 GB, 16106127360 bytes
+64 heads, 32 sectors/track, 15360 cylinders
+Units = cylinders of 2048 * 512 = 1048576 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x00000000
+
+
+Disk /dev/sdc: 214.7 GB, 214748364800 bytes
+255 heads, 63 sectors/track, 26108 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x00000000
+
+
+Disk /dev/sdd: 1099.5 GB, 1099529453568 bytes
+255 heads, 63 sectors/track, 133676 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x00000000
+
+
+Disk /dev/sde: 1099.5 GB, 1099529453568 bytes
+255 heads, 63 sectors/track, 133676 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x00000000
+
+
+Disk /dev/sdf: 1099.5 GB, 1099529453568 bytes
+255 heads, 63 sectors/track, 133676 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x00000000
+
+
+[root@racdb04bd ~]#  iscsiadm --mode session
+tcp: [1] 10.49.49.123:3260,1002 iqn.1992-08.com.netapp:sn.536915029 (non-flash)
+
+
+
+ 
+
+  
+Other ISCSI operation : 
+
+logout from a ISCSI portal  : 
+[root@pvm-test iscsi]# iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915029 --portal 10.49.49.123:3260,1002 -u
+Logging out of session [sid: 1, target: iqn.1992-08.com.netapp:sn.536915029, portal: 10.49.49.123,3260]
+Logout of [sid: 1, target: iqn.1992-08.com.netapp:sn.536915029, portal: 10.49.49.123,3260] successful.
+  
+OR : 
+
+[root@pvm-test ~]# iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915029 -p 10.49.49.123:3260,1002 -u
+Logging out of session [sid: 1, target: iqn.1992-08.com.netapp:sn.536915029, portal: 10.49.49.123,3260]
+Logout of [sid: 1, target: iqn.1992-08.com.netapp:sn.536915029, portal: 10.49.49.123,3260] successful.
+
+
+Or 
+iscsiadm --mode node --targetname iqn.1992-08.com.netapp:sn.48c8f6621c9211e99bba00a098e38fd1:vs.19 --portal 10.49.53.62:3260 --logout
+
+
+
+
+
+
+#############################################################
+[root@racdb09bd ~]# iscsiadm --mode session
+tcp: [1] 10.49.49.124:3260,1003 iqn.1992-08.com.netapp:sn.536915029 (non-flash)
+
+[root@racdb09bd ~]# iscsiadm --mode session
+tcp: [1] 10.49.49.124:3260,1003 iqn.1992-08.com.netapp:sn.536915029 (non-flash)
+
+[root@racdb09bd ~]# iscsiadm -m node -T iqn.1992-08.com.netapp:sn.536915056 -p 10.49.49.114:3260 --login
+Logging in to [iface: default, target: iqn.1992-08.com.netapp:sn.536915056, portal: 10.49.49.114,3260] (multiple)
+Login to [iface: default, target: iqn.1992-08.com.netapp:sn.536915056, portal: 10.49.49.114,3260] successful.
+[root@racdb09bd ~]# iscsiadm --mode session
+tcp: [1] 10.49.49.124:3260,1003 iqn.1992-08.com.netapp:sn.536915029 (non-flash)
+tcp: [2] 10.49.49.114:3260,1003 iqn.1992-08.com.netapp:sn.536915056 (non-flash)
+[root@racdb09bd ~]# fdisk -l
+
+Disk /dev/sda: 225.5 GB, 225485783040 bytes
+255 heads, 63 sectors/track, 27413 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disk identifier: 0x0008d06c
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *           1       10444    83886080   83  Linux
+/dev/sda2           10444       11488     8388608   83  Linux
+/dev/sda3           11488       12533     8388608   83  Linux
+/dev/sda4           12533       27414   119536640    5  Extended
+/dev/sda5           12533       20887    67108864   82  Linux swap / Solaris
+/dev/sda6           20888       27414    52425728   83  Linux
+
+Disk /dev/sdb: 16.1 GB, 16106127360 bytes
+64 heads, 32 sectors/track, 15360 cylinders
+Units = cylinders of 2048 * 512 = 1048576 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x9fb6734b
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sdb1               2       15360    15727616   83  Linux
+
+Disk /dev/sdc: 214.7 GB, 214748364800 bytes
+86 heads, 25 sectors/track, 195083 cylinders
+Units = cylinders of 2150 * 512 = 1100800 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0xd6c8d20c
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sdc1               1      195084   209714176   83  Linux
+
+Disk /dev/sdd: 1099.5 GB, 1099529453568 bytes
+215 heads, 42 sectors/track, 237820 cylinders
+Units = cylinders of 9030 * 512 = 4623360 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x5dfb2624
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sdd1               1      237821  1073758208   83  Linux
+
+Disk /dev/sde: 1099.5 GB, 1099529453568 bytes
+215 heads, 42 sectors/track, 237820 cylinders
+Units = cylinders of 9030 * 512 = 4623360 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0xdad7cb40
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sde1               1      237821  1073758208   83  Linux
+
+Disk /dev/sdf: 1099.5 GB, 1099529453568 bytes
+215 heads, 42 sectors/track, 237820 cylinders
+Units = cylinders of 9030 * 512 = 4623360 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x184de5d7
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sdf1               1      237821  1073758208   83  Linux
+
+Disk /dev/sdg: 1099.5 GB, 1099529453568 bytes
+255 heads, 63 sectors/track, 133676 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 65536 bytes
+Disk identifier: 0x00000000
+
+[root@racdb09bd ~]# service iscsi status
+iSCSI Transport Class version 2.0-870
+version 6.2.0-873.13.el6
+Target: iqn.1992-08.com.netapp:sn.536915029 (non-flash)
+        Current Portal: 10.49.49.124:3260,1003
+        Persistent Portal: 10.49.49.124:3260,1003
+                **********
+                Interface:
+                **********
+                Iface Name: default
+                Iface Transport: tcp
+                Iface Initiatorname: iqn.1988-12.com.oracle:e573ecaacf1e
+                Iface IPaddress: 10.49.49.59
+                Iface HWaddress: <empty>
+                Iface Netdev: <empty>
+                SID: 1
+                iSCSI Connection State: LOGGED IN
+                iSCSI Session State: LOGGED_IN
+                Internal iscsid Session State: NO CHANGE
+                *********
+                Timeouts:
+                *********
+                Recovery Timeout: 120
+                Target Reset Timeout: 30
+                LUN Reset Timeout: 30
+                Abort Timeout: 15
+                *****
+                CHAP:
+                *****
+                username: <empty>
+                password: ********
+                username_in: <empty>
+                password_in: ********
+                ************************
+                Negotiated iSCSI params:
+                ************************
+                HeaderDigest: None
+                DataDigest: None
+                MaxRecvDataSegmentLength: 262144
+                MaxXmitDataSegmentLength: 65536
+                FirstBurstLength: 65536
+                MaxBurstLength: 65536
+                ImmediateData: Yes
+                InitialR2T: No
+                MaxOutstandingR2T: 1
+                ************************
+                Attached SCSI devices:
+                ************************
+                Host Number: 3  State: running
+                scsi3 Channel 00 Id 0 Lun: 0
+                        Attached scsi disk sdb          State: running
+                scsi3 Channel 00 Id 0 Lun: 1
+                        Attached scsi disk sdc          State: running
+                scsi3 Channel 00 Id 0 Lun: 2
+                        Attached scsi disk sdd          State: running
+                scsi3 Channel 00 Id 0 Lun: 3
+                        Attached scsi disk sde          State: running
+                scsi3 Channel 00 Id 0 Lun: 4
+                        Attached scsi disk sdf          State: running
+Target: iqn.1992-08.com.netapp:sn.536915056 (non-flash)
+        Current Portal: 10.49.49.114:3260,1003
+        Persistent Portal: 10.49.49.114:3260,1003
+                **********
+                Interface:
+                **********
+                Iface Name: default
+                Iface Transport: tcp
+                Iface Initiatorname: iqn.1988-12.com.oracle:e573ecaacf1e
+                Iface IPaddress: 10.49.49.59
+                Iface HWaddress: <empty>
+                Iface Netdev: <empty>
+                SID: 2
+                iSCSI Connection State: LOGGED IN
+                iSCSI Session State: LOGGED_IN
+                Internal iscsid Session State: NO CHANGE
+                *********
+                Timeouts:
+                *********
+                Recovery Timeout: 120
+                Target Reset Timeout: 30
+                LUN Reset Timeout: 30
+                Abort Timeout: 15
+                *****
+                CHAP:
+                *****
+                username: <empty>
+                password: ********
+                username_in: <empty>
+                password_in: ********
+                ************************
+                Negotiated iSCSI params:
+                ************************
+                HeaderDigest: None
+                DataDigest: None
+                MaxRecvDataSegmentLength: 262144
+                MaxXmitDataSegmentLength: 65536
+                FirstBurstLength: 65536
+                MaxBurstLength: 65536
+                ImmediateData: Yes
+                InitialR2T: No
+                MaxOutstandingR2T: 1
+                ************************
+                Attached SCSI devices:
+                ************************
+                Host Number: 4  State: running
+                scsi4 Channel 00 Id 0 Lun: 0
+                        Attached scsi disk sdg          State: running
+
+** To see the WWN id of the lun 
+ls -l /dev/disk/by-id/
+
+
+
+
+
+
+
+
+
+
+Multipath : command  
+
+[root@pvm-test ~]# iscsiadm --mode node -l all
+Logging in to [iface: default, target: iqn.1992-08.com.netapp:sn.4082367488, portal: 192.168.51.174,3260] (multiple)
+Logging in to [iface: default, target: iqn.1992-08.com.netapp:sn.4082367488, portal: 192.168.51.171,3260] (multiple)
+Logging in to [iface: default, target: iqn.1992-08.com.netapp:sn.4082367488, portal: 192.168.51.173,3260] (multiple)
+Login to [iface: default, target: iqn.1992-08.com.netapp:sn.4082367488, portal: 192.168.51.174,3260] successful.
+Login to [iface: default, target: iqn.1992-08.com.netapp:sn.4082367488, portal: 192.168.51.171,3260] successful.
+Login to [iface: default, target: iqn.1992-08.com.netapp:sn.4082367488, portal: 192.168.51.173,3260] successful.
+
+
+[root@pvm-test ~]# iscsiadm --mode session
+tcp: [3] 192.168.51.174:3260,1003 iqn.1992-08.com.netapp:sn.4082367488 (non-flash)
+tcp: [4] 192.168.51.171:3260,1000 iqn.1992-08.com.netapp:sn.4082367488 (non-flash)
+tcp: [5] 192.168.51.173:3260,1002 iqn.1992-08.com.netapp:sn.4082367488 (non-flash)
+
+
+
+Discover a new LUN, enter the following commands: 
+
+[root@pvm-test ~]# /usr/bin/rescan-scsi-bus.sh -a
+Scanning SCSI subsystem for new devices
+Scanning host 2 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+Scanning host 3 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+Scanning host 4 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+0 new or changed device(s) found.          
+0 remapped or resized device(s) found.		
+0 device(s) removed.  
+
+
+
+
+
+sg3_utils-1.28-5.el6.x86_64 : Utilities for devices that use SCSI command sets
+Repo        : oraclelinux6-x86_64
+Matched from:
+Filename    : /usr/bin/rescan-scsi-bus.sh
+[root@pvm-test ~]# /usr/bin/rescan-scsi-bus.sh -a
+Scanning SCSI subsystem for new devices
+Scanning host 2 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+Scanning host 3 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+Scanning host 4 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+0 new or changed device(s) found.          
+0 remapped or resized device(s) found.		
+0 device(s) removed.                 
+[root@pvm-test ~]# sanlun lun show all
+	no controller/vserver LUNs available
+[root@pvm-test ~]# /usr/bin/rescan-scsi-bus.sh -a
+Scanning SCSI subsystem for new devices
+Scanning host 2 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+ Scanning for device 2 0 0 0 ...           
+NEW: Host: scsi2 Channel: 00 Id: 00 Lun: 00
+      Vendor: NETAPP   Model: LUN              Rev: 820a
+      Type:   Direct-Access                    ANSI SCSI revision: 05
+ Scanning for device 2 0 0 1 ... 
+NEW: Host: scsi2 Channel: 00 Id: 00 Lun: 01
+      Vendor: NETAPP   Model: LUN              Rev: 820a
+      Type:   Direct-Access                    ANSI SCSI revision: 05
+Scanning host 3 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+ Scanning for device 3 0 0 0 ...           
+NEW: Host: scsi3 Channel: 00 Id: 00 Lun: 00
+      Vendor: NETAPP   Model: LUN              Rev: 820a
+      Type:   Direct-Access                    ANSI SCSI revision: 05
+ Scanning for device 3 0 0 1 ... 
+NEW: Host: scsi3 Channel: 00 Id: 00 Lun: 01
+      Vendor: NETAPP   Model: LUN              Rev: 820a
+      Type:   Direct-Access                    ANSI SCSI revision: 05
+Scanning host 4 for  SCSI target IDs  0 1 2 3 4 5 6 7, all LUNs
+ Scanning for device 4 0 0 0 ...           
+NEW: Host: scsi4 Channel: 00 Id: 00 Lun: 00
+      Vendor: NETAPP   Model: LUN              Rev: 820a
+      Type:   Direct-Access                    ANSI SCSI revision: 05
+ Scanning for device 4 0 0 1 ... 
+NEW: Host: scsi4 Channel: 00 Id: 00 Lun: 01
+      Vendor: NETAPP   Model: LUN              Rev: 820a
+      Type:   Direct-Access                    ANSI SCSI revision: 05
+6 new or changed device(s) found.          
+	[2:0:0:0]
+	[2:0:0:1]
+	[3:0:0:0]
+	[3:0:0:1]
+	[4:0:0:0]
+	[4:0:0:1]
+0 remapped or resized device(s) found.		
+0 device(s) removed. 
+
+
+How to find WWID RHEL : 
+
+[root@racdb13bd ~]# scsi_id -g -u /dev/sda
+360a98000383032674b2b474a67383378
