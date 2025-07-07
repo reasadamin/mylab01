@@ -1,0 +1,487 @@
+Therap Patch Management Procedure 
+
+Version History
+Date
+Changed By
+Approved By
+Change
+Version 1
+12-03-2019
+Shamrat
+
+
+Initial version. 
+Version 2
+10-12-2022
+Shamrat
+Larry Martin
+Updated to reflect current process
+
+
+
+
+
+
+
+
+
+
+
+
+Vulnerability Assessment:
+
+In Therap we use Tenable primarily for the vulnerability assessment. We use Tenable IO, a cloud based proprietary product that uses Nessus scanner. It runs both credential and non credential scans over the assets and gives a risk based overview of vulnerability. Tenable uses a metric called VPR(Vulnerability Priority Rating) to prioritize the vulnerability within an asset. VPR ratings vary from 1 to 10, VPR 10 are the most critical ones. As per the Therap security policy anything above or equal to 9 will be considered as the Critical. VPR 8-8.9 will be considered as High and below 7.9 are as medium and low.
+
+Patching procedure for Critical Vulnerabilities:
+
+Vulnerabilities that are above or equal to VPR 9 we consider those as critical vulnerabilities. Usually in Therap we maintain a quarterly patching cycle since our databases and application servers are mostly Oracle products and they release their Cumulative Patch Updates quarterly. Within this 3 months of time if tenable reports any VPR9+ vulnerability we try to roll that patch out in the shortest possible time within our environment. Usually it takes not more than 7 days to apply any critical patch in the most business critical assets or internet facing assets ie. Routers, Firewalls, Load Balancers, Mail Servers, App servers.
+
+We also consider VPR 8-8.9 rating near to critical, so with minimum testing it takes not more than 14 days to roll those patches out in our environment.
+
+For those Emergency patches we go through different approval procedures. Senior management discusses the vulnerability with the process owners and by doing the risk assessment and contingency discussion they approve the deployment if the overall security and privacy risk is acceptable.
+  
+For the Operating systems we have an Emergency channel ready in Oracle Spacewalk to get the critical patches when it is available and to deploy in the servers.
+
+General Patching Procedure:
+
+We use Oracle database and application servers heavily in our environment, and they quarterly release their Cumulative Patch Updates(CPU). In Therap we also maintain that quarterly patching cycle to be up to date with them. For other vendor products we maintain that quarterly patching timeline.
+
+Testing & Deployment:
+
+When Oracle releases the CPUs for a particular quarter, we use our Oracle support login credentials to download the patches available for the database and the web servers. 
+
+For other vendor products we manually search for the availability of the new patches for the product and we use our support credentials to download the patch. 
+
+For the operating systems we stop the repository syncing in Spacewalk. Then we initially deployed the patches in our development environment so that the developers, testers and dbs could do the sociability testing for the newly applied patches. It took 2 week to complete the testing. 
+
+Then we apply the patches to our Pre production environment where Demo and Beta contexts reside. We also spend another
+2 week to confirm that the patch is working smoothly. Then we start to apply the patches into our production environment starting with the secondary site.
+
+
+
+
+Internet Facing
+App,DB, interfacing
+Other Prod*
+Dev/Office**
+VPR 9+, CVE Crit
+7
+14
+21
+21
+VPR 8-8.9, CVE High
+14
+21
+28
+30
+VPR 1-7.9
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+* ‘Prod’ Includes PPS
+** Timeframes can be superceded by testing required in Dev environment to meet more aggressive targets
+
+
+Patch Deployment:
+
+1. Centralized Patching of Oracle Linux Server with SpaceWalk:
+
+i. Patch screening procedure
+Quarterly patching cycle
+Tenable screening
+Approval 
+
+ii. Deployment Procedure
+With Yum
+Deploy in BD
+Deploy in PPS
+Deploy in Cloud
+Deploy in Prod
+iii. Emergency Deployment Procedure
+Implement Critical patches using emergency channel
+
+2. Non Centralized Patching Process:
+
+i. Vendor Based Products:
+Cisco
+Netapp
+Fortinet
+Infoblox
+Jira
+ii. Open-source:
+Nagios
+Cacti
+iii. Firmware: 
+Oracle Servers
+Network Devices
+Storage Devices
+
+Centralized Patch Management Process:
+
+We use Oracle Linux Manager(previously known as Oracle Spacewalk) to apply OS patches on the servers.
+
+Oracle Spacewalk:
+Therap uses Oracle Linux 7, which is a linux based distribution. This OS compiled from the Red Hat Enterprise Linux(RHEL) source code. It uses Unbreakable Enterprise Kernel(UEK) that is based on the mainline Linux kernel versions with Oracle's own enhancements.
+
+As a centralized OS management service, Therap uses Spacewalk 2.7 to automate the task of patching and software management. It's an open-source system management solution, licensed under the GNU General Public License V2. 
+
+We have to create different software channels in Spacewalk, each channel is associated with at least one channel, which defines the source of the packages and errata.
+
+The Unbreakable Linux Network (ULN) is a comprehensive resource for Oracle Unbreakable Linux support subscribers, offering access to Linux software patches, updates and fixes, along with information on the up2date program and support policies. All the credentials are provided to "/etc/rhn/spacewalk-repo-sync/uln.conf" file in the Spacewalk server.
+
+ULN provides an olN_arch_latest(ie. ol6_x86_64_latest) repository, which includes all packages for an Oracle Linux release. It also provides base and patch channels for each update of an Oracle Linux release.
+
+Oracle Yum Server provides a public_olN_latest repository, which includes all packages for an entire Oracle Linux release in addition to a public_olN_un_base repository for each update. Unlike ULN, Oracle Yum Server does not provide patch channels for updates.
+
+Oracle releases security advisories for Oracle Linux as patches become available. Security advisories (ELSA) are published at https://linux.oracle.com/security/.
+
+Oracle will also publish Oracle Linux Bulletins quarterly, which list all CVEs that had been resolved and announced in Oracle Linux Security Advisories in the last one month prior to the release of the bulletin. The Oracle Linux Bulletin will be published on the same day as Oracle Critical Patch Updates are released. These bulletins will also be updated for the following two months after their release (i.e., the two months between the normal quarterly Critical Patch Update publication dates) to cover all CVEs that had been resolved in those two months following the bulletin's publication. In addition, Oracle Linux Bulletins may also be updated for vulnerability fixes deemed too critical to wait for the next scheduled bulletin publication date.
+
+Oracle Linux categorized its security advisories as the following: Security (Critical), Security (Important), Security (Moderate), Security (Low), Bug Fixes, Enhancements. They quantify the severity of the CVEs based on CVSSv3. 
+
+
+Applying OS patch:
+
+We stop the Spacewalk repository syncing at the beginning of the patching cycle so that we could remain consistent with the software/package versions throughout the Test and Production environment. Then we start applying patches in the BD  environment first. Upon confirmation from the developer and sqa team that the applied patches are performing well with the application, we start applying it in the PPS environment. Then again if the developer and sqa confirms that the dev & demo context along with the alpha contexts are performing well, we schedule to apply patch in our secondary production site, subsequently we apply patch in the other site after the site cutover.
+
+To apply patches in an Operating system we use Yum utility. Following are some useful procedures to use the utility.
+
+To list the errata that are available for your system, enter:
+[root@test01 ~]# yum updateinfo list
+Loaded plugins: security
+ELBA-2018-1881 bugfix         ORBit2-2.14.17-7.el6.x86_64
+ELBA-2018-1892 bugfix         abrt-2.0.8-44.0.1.el6.x86_64
+ELBA-2018-1892 bugfix         abrt-addon-ccpp-2.0.8-44.0.1.el6.x86_64
+
+The output from the command sorts the available errata in order of their IDs, and it also specifies whether each erratum is a security patch (severity/Sec.), a bug fix (bugfix), or a feature enhancement (enhancement). Security patches are listed by their severity: Important, Moderate, or Low.
+
+[root@test01 ~]# yum updateinfo list --sec-severity=Important
+Loaded plugins: security
+ELSA-2018-0101 Important/Sec. bind-libs-32:9.8.2-0.62.rc1.el6_9.5.x86_64
+ELSA-2018-2571 Important/Sec. bind-libs-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+ELSA-2018-2571 Important/Sec. bind-utils-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+
+[root@test01 ~]# yum updateinfo list bugfix
+Loaded plugins: security
+ELBA-2018-1881 bugfix ORBit2-2.14.17-7.el6.x86_64
+ELBA-2018-1892 bugfix abrt-2.0.8-44.0.1.el6.x86_64
+ELBA-2018-1892 bugfix abrt-addon-ccpp-2.0.8-44.0.1.el6.x86_64
+
+
+To list the security errata by their Common Vulnerabilities and Exposures (CVE) IDs instead of their errata IDs, specify the keyword cves as an argument:
+
+[root@test01 ~]# yum updateinfo list cves
+Loaded plugins: security
+ CVE-2017-3145    Important/Sec. bind-libs-32:9.8.2-0.62.rc1.el6_9.5.x86_64
+ CVE-2018-5740    Important/Sec. bind-libs-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+ CVE-2017-3145    Important/Sec. bind-utils-32:9.8.2-0.62.rc1.el6_9.5.x86_64
+ CVE-2018-5740    Important/Sec. bind-utils-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+ 
+Use the --cve option to display the errata that correspond to a specified CVE, for example:
+
+[root@test01 ~]# yum updateinfo list --cve CVE-2018-0732
+Loaded plugins: security
+ELSA-2018-4248 Important/Sec. openssl-1.0.1e-57.0.6.el6.x86_64
+updateinfo list done
+
+To display more information, specify info instead of list, for example:
+
+[root@test01 ~]# yum updateinfo info --cve CVE-2018-0732
+Loaded plugins: security
+
+=========================================================================   
+openssl security update
+=========================================================================
+  Update ID : ELSA-2018-4248
+    Release : Oracle Linux 6
+       Type : security
+     Status : final
+     Issued : 2018-10-12
+       CVEs : CVE-2018-0732
+	    : CVE-2018-0737
+Description : [1.0.1e-57.0.6]
+            : - Oracle bug 28730228: backport CVE-2018-0732
+            : - Oracle bug 28758493: backport CVE-2018-0737
+   Severity : Important
+updateinfo info done
+To update only those packages that correspond to a CVE or erratum, for example:
+
+[root@test01 ~]# yum update --cve CVE-2018-0732
+Loaded plugins: security
+Setting up Update Process
+Resolving Dependencies
+Limiting packages to security relevant ones
+1 package(s) needed (+0 related) for security, out of 140 available
+--> Running transaction check
+---> Package openssl.x86_64 0:1.0.1e-57.0.1.el6 will be updated
+---> Package openssl.x86_64 0:1.0.1e-57.0.6.el6 will be an update
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+==========================================================================================================================
+ Package                            Arch                              Version                                       Repository                                    Size
+==========================================================================================================================
+Updating:
+ openssl                            x86_64                            1.0.1e-57.0.6.el6                             public_ol6_latest                            1.5 M
+
+Transaction Summary
+==========================================================================================================================
+Upgrade       1 Package(s)
+
+Total download size: 1.5 M
+Is this ok [y/N]: 
+
+[root@test01 ~]# yum update --advisory ELSA-2018-4248
+Loaded plugins: security
+Setting up Update Process
+Resolving Dependencies
+Limiting packages to security relevant ones
+1 package(s) needed (+0 related) for security, out of 140 available
+--> Running transaction check
+---> Package openssl.x86_64 0:1.0.1e-57.0.1.el6 will be updated
+---> Package openssl.x86_64 0:1.0.1e-57.0.6.el6 will be an update
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+==========================================================================================================================
+ Package                            Arch                              Version                                       Repository                                    Size
+==========================================================================================================================
+Updating:
+ openssl                            x86_64                            1.0.1e-57.0.6.el6                             public_ol6_latest                            1.5 M
+
+Transaction Summary
+==========================================================================================================================
+Upgrade       1 Package(s)
+
+Total download size: 1.5 M
+Is this ok [y/N]: 
+
+SOURCE:
+https://docs.oracle.com/cd/E37670_01/E37355/html/ol_security_yum.html
+
+
+Non Centralized Procedures: 
+
+Server Firmware updates:
+Oracle announces the firmware update information for Oracle servers and Oracle Sun servers in the Oracle Technology Network portal. Updates are accumulated there as per the server architecture and the model. In every patching cycle we manually check the portal and look for new updates. 
+A zipped update package needs to be downloaded by login to the oracle support. Ops team download the file and keep it to the tftp server. By connecting to the ilom cli ops team apply the firmware by executing OS commands.
+
+Portal Link: 
+https://www.oracle.com/technetwork/systems/patches/firmware/release-history-jsp-138416.html
+
+Login Method:
+Oracle support login
+
+VMWare Updates:
+VMware product updates are available in their update portal. After user authentication, we need to search the product with the appropriate version to list out the available updates. 
+If updates are available, we download the zipped formated file, and take it to the appropriate server and install manually as per the instructions provided with it.
+
+Portal link:
+my.vmware.com
+
+Login Method:
+Vmware support login
+
+Oracle Virtual machine:
+We update OVM through the yum repository. To do so we need to create the yum repository server first which is accessible through http & https then we configure to mirror ULN channels, that contains packages required to upgrade Oracle VM Server to a transitional state and packages required to upgrade Oracle VM Server to a particular version or install outstanding patches. ovsrepo01-ta/tb/bd are the servers configured for the Yum repository.
+
+To get the notifications of the new updates and patch releases, we registered one OVM server to the Spacewalk and sync the ULN repos required for the OVM update. 
+
+
+Storage System:
+Netapp: 
+The automated upgrade method validates the cluster components to verify that the cluster can be upgraded, installs the target ONTAP image on each node, and then executes the upgrade in the background. Automated upgrades of multi-node clusters are non-disruptive
+
+To upgrade/update netapp systems, first we need to check the update version available for the system, then form netapp support site we need to download the software image. Need a http server to keep the software image, we use pxe servers to keep that software image.
+
+To kick off the upgrading process, go to the "cluster update" tab in the ontap system manager, click Configuration > Cluster Update. In the Cluster Update tab, click Add from server. In the Add a New Software Image dialog box, enter the URL of the HTTP server where the software image we kept.
+
+Then, Click Validate to run the pre-update validation checks to verify whether the cluster is ready for an
+update. Upon completion the process click Next> Update..
+
+Portal Link:
+https://aiq.netapp.com/custom-dashboard/customer/2247608/dashboard
+
+Login Method:
+Netapp support login
+
+
+Oracle ZS3:
+ZS3 controllers provide HA features in Active-Standby mode. That's why we need to upgrade the OS/firmware of a controller one at a time, then "Takeover" to another controller and upgrade the other.
+
+To do so, navigate to Configuration> Cluster tab to see the cluster status.
+
+To kick off the upgrade process, navigate to Maintenance> System. In the Software updates section, click on "Check now" to query the availability of updates.
+From the list, if any latest one is outstanding, click on "Download Entry" to download the updates. Then click on "Start & update using this media" to start the process of updating. A status bar will show the progress of the process. 
+
+After finishing the process for one controller, start the upgradation process to the other controller. Before that takeover the active status of the controller. 
+  
+FreeNas:
+FreeNas is a single controller storage system. We need a downtime to upgrade the process.
+
+To check the available updates, navigate to, System> Update page.
+Click on "check now" to query the available updates.
+Select the stable release train
+Then, "Apply Pending Updates"
+System will install the pending updates and reboot automatically.
+
+   
+
+Cisco Router & Switches:
+Before upgrading the cisco switch/router, go through release notes for the software image file for any exceptions to this upgrade procedure.Then log in to the device, ensure that the required space is available for the image file to be copied. If it needs more space on the active supervisor module, delete unnecessary files to make space available. 
+
+Then log in to Cisco.com, choose the software image file for the device and download it to the tftp server.
+Copy the software image to the active supervisor module using scp. Display the SHA256 checksum for the file to verify the operating system integrity and ensure that the downloaded image is safe to install and use.
+
+Apply appropriate command to upgrade the device. Save the running configuration to the startup configuration file. Erase the startup configuration file. Reload the switch. Login and verify that the device is running the required software version. Install the licenses to ensure that the required features are available on the device.
+ 
+
+
+Windows Updating:
+Windows updates are managed by a dedicated windows server with WSUS(Windows Server Update Service) installed on it. WSUS server downloads Critical, Security, Feature and version upgrade from "http://windowsupdate.microsoft.com" site. WSUS identify the windows from the active directory server. A user policy is created to the active directory mentioning the WSUS server IP and port. The policy is applied to the client PC through the OU(Organizational unit). According to the policy WSUS server provides the updates to the client PCs automatically. Client PC users need to install updates manually when they get the notifications.
+
+Nagios:
+From the nagios dashboard click on "check for update" , they will show the updates available for the version.
+To install login to the nagios installed machine, switch user to "nagios" with su command, then remove the old html files that were used by the frontend from "/usr/local/nagios/share" location. Then wget the update file, extract the file, we'll get the directory named nagios-x.y.z, go to the directory and execute the "configure" script mentioning the groupname, then execute make and make all command. To verify the configurations run the following command,
+/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+then restart the service,
+/sbin/service nagios restart
+
+Portal Link:
+https://www.nagios.com/
+
+
+Cacti: 
+We've installed the cacti by yum, so if any update remains pending or a new version arrives we just need to run the command yum update cacti. Then check the service status and restart the service if required.
+
+Portal Link:
+https://www.cacti.net/download_cacti.php
+
+
+Fortinet:
+There are two methods of updating the firmware using the GUI, one of them is Upgrading from the local drive.
+
+- When uploading the firmware from the local drive we need to download the update packages from  https://support.fortinet.com/. We need credentials to login to the portal and search for the appropriate version of firmware to download.
+
+- Upgrading from the FortiGuard Network offers only a limited number of firmware builds to update or downgrade. So we need to confirm the firmware version we need to upgrade to, then need to check whether the firmware is upgradable from the Fortiguard network or not.
+
+Portal Link:
+https://support.fortinet.com/
+
+Login Method:
+Fortinet support login
+
+
+Infoblox:
+Infoblox technical support team will confirm the file name to use when downloading new upgrade files, or need to follow the regular mail notifications about the availability of new updates.
+
+After downloading and store the new upgrade file on the local network, upload it to the Grid Master,
+1. From the Grid tab, select the Upgrade tab, and then click Upload in the panel or from the Toolbar.
+2. Navigate to the directory where we have stored the NIOS software upgrade, and then click Open or Upload.
+
+The appliance uploads the file and displays the status of the upload in the status bar. Need to make sure that we do not navigate away from the Upgrade tab until after the upload is complete. Otherwise, the upload process stops.
+
+When you upload the NIOS software upgrade to an HA Grid Master, only the active node receives the software. The passive node does not. Therefore, if the Grid Master fails over before a distribution starts, we must upload the software again. If we do not, the distribution fails because the new active node does not have the uploaded software.
+
+Distributing the software upgrade files involves unpacking the software files and loading the new software. When you perform a distribution, the NIOS appliance loads the new software code into an alternate disk partition, which overwrites any previously saved version of code that is already there. Therefore starting the distribution disables the appliance from reverting to a release prior to the current version.
+
+To distribute software immediately after uploading it,
+
+From the Grid tab, select the Upgrade tab, and then click Distribute -> Distribute Now from the Toolbar.
+In the confirmation dialog box, click Yes to start the distribution.
+
+After we successfully distribute a software upgrade to the Grid Master, we can test an upgrade on the Grid Master before actually implementing it. This allows us to resolve potential data migration issues before the actual upgrade.
+
+To start an upgrade test:
+From the Grid tab, select the Upgrade tab, and then click Test Upgrade from the Toolbar. Test upgrade is enabled only for a major upgrade (not an Upgrade Lite compatible upgrade).
+After starting an upgrade test, we can view its status in the status bar. We can also stop it at any time. 
+
+To stop an upgrade test:
+From the Grid Upgrade Test Status bar, click the Stop icon.
+
+After the test successfully finishes, the appliance displays a message confirming that the test upgrade is complete.
+
+Performing a software upgrade involves rebooting the appliances and then running the new software.To start the process of upgrading a Grid immediately:
+From the Grid tab, select the Upgrade tab, and then click Upgrade -> Upgrade Now from the Toolbar
+
+It is recommended to take a backup of the system. We would take backup of the system locally,
+
+Backup Data files manually:
+From the Grid tab, select the Grid Manager tab, and then click Backup -> Manual Backup from the Toolbar.
+
+In the Backup wizard, select the destination of the backup file from the Backup to drop-down list:
+My Computer: Back up system files to a local directory on your computer. This is the default.
+
+To restore a backup file to the same independent appliance or Grid Master:
+From the Grid tab, select the Grid Manager tab, and then click Restore from the Toolbar.
+
+In the Restore dialog box, choose one of the following from the Restore from drop-down list:
+My Computer: Restore a file from your local computer. This is the default.
+Filename: Click Select File to navigate to the configuration file.
+
+
+F5 LTM:
+Login to https://downloads.f5.com/, search and download the ISO image of the version you want to upgrade to.
+
+it is better to export the configuration of both nodes before upgrading.
+Using the web GUI (you can also use the tmsh command line) browse to System – Archives, and press the <Create> button.
+
+After being created, download it to a local storage (your PC or laptop)
+A license reactivation may be necessary on each node to avoid problems during the upgrade process
+
+Determine the service check date by running this command:
+
+# grep "Service check date" /config/bigip.license
+Service check date :          20180208
+
+If the service check date is earlier than the license check date (you can check it on the image in the download section), the license reactivation is needed by clicking the “Re-activate…” button under the License section:
+License –> Reactivate
+
+Import on both nodes the previously downloaded ISO image to make it available to the BIG IPs
+Software Management –> Image List –> Import
+
+For both nodes, in the “Image List” section now the imported version is available in the “Available Images section”:
+System –> Software Management –> Image List
+
+Now, select "Install", select "Disk", select "Volume set name", then click "Install" [We create virtual disk to apply new update, in case of emergency we boot from the previous disk]
+
+
+Now, we are ready to boot this node with the newly installed version.
+Browse to the “Boot Locations” tab and press the concrete boot location link we want to activate.
+System –> Software Management –> Boot locations
+
+Set the “Install Configuration” parameter to “Yes” (unless you want a clean configuration when booting the new version), 
+select as source volume the last (and still current) active volume and press “Activate”:
+
+Wait some minutes until the device reboots and, afterwards, check it booted up correctly, the version number is the new expected one and that the configuration was successfully loaded.
+
+After checking there seems not to be any problem, time to set this recently upgraded node as active. First of all, release the offline state.
+Upgraded node – Release offline
+
+Now, set the other node as the standby one so the upgraded one becomes the active,
+Non-Upgraded node – Force to standby
+
+Portal Link:
+https://downloads.f5.com/
+
+Login Method:
+F5 support login
