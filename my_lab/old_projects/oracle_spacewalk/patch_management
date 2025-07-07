@@ -1,0 +1,140 @@
+To apply patches in an Operating system we use Yum utility. Following are some useful procedures to use the utility.
+
+
+To list the errata that are available for your system, enter:
+[root@test01 ~]# yum updateinfo list
+Loaded plugins: security
+ELBA-2018-1881 bugfix         ORBit2-2.14.17-7.el6.x86_64
+ELBA-2018-1892 bugfix         abrt-2.0.8-44.0.1.el6.x86_64
+ELBA-2018-1892 bugfix         abrt-addon-ccpp-2.0.8-44.0.1.el6.x86_64
+ELBA-2018-1892 bugfix         abrt-python-2.0.8-44.0.1.el6.x86_64
+
+
+
+
+The output from the command sorts the available errata in order of their IDs, and it also specifies whether each erratum is a security patch (severity/Sec.), a bug fix (bugfix), or a feature enhancement (enhancement). Security patches are listed by their severity: Important, Moderate, or Low.
+
+[root@test01 ~]# yum updateinfo list --sec-severity=Important
+Loaded plugins: security
+ELSA-2018-0101 Important/Sec. bind-libs-32:9.8.2-0.62.rc1.el6_9.5.x86_64
+ELSA-2018-2571 Important/Sec. bind-libs-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+ELSA-2018-2571 Important/Sec. bind-utils-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+ELSA-2018-0469 Important/Sec. dhclient-12:4.1.1-53.P1.0.1.el6_9.3.x86_64
+ELSA-2018-0469 Important/Sec. dhcp-common-12:4.1.1-53.P1.0.1.el6_9.3.x86_64
+
+[root@test01 ~]# yum updateinfo list bugfix
+Loaded plugins: security
+ELBA-2018-1881 bugfix ORBit2-2.14.17-7.el6.x86_64
+ELBA-2018-1892 bugfix abrt-2.0.8-44.0.1.el6.x86_64
+ELBA-2018-1892 bugfix abrt-addon-ccpp-2.0.8-44.0.1.el6.x86_64
+ELBA-2018-1892 bugfix abrt-addon-kerneloops-2.0.8-44.0.1.el6.x86_64
+
+
+
+To list the security errata by their Common Vulnerabilities and Exposures (CVE) IDs instead of their errata IDs, specify the keyword cves as an argument:
+
+[root@test01 ~]# yum updateinfo list cves
+Loaded plugins: security
+ CVE-2017-3145    Important/Sec. bind-libs-32:9.8.2-0.62.rc1.el6_9.5.x86_64
+ CVE-2018-5740    Important/Sec. bind-libs-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+ CVE-2017-3145    Important/Sec. bind-utils-32:9.8.2-0.62.rc1.el6_9.5.x86_64
+ CVE-2018-5740    Important/Sec. bind-utils-32:9.8.2-0.68.rc1.el6_10.1.x86_64
+ CVE-2018-5732    Important/Sec. dhclient-12:4.1.1-53.P1.0.1.el6_9.3.x86_64
+ CVE-2018-5733    Important/Sec. dhclient-12:4.1.1-53.P1.0.1.el6_9.3.x86_64
+ CVE-2018-1111    Critical/Sec.  dhclient-12:4.1.1-53.P1.0.1.el6_9.4.x86_64
+
+
+
+Use the --cve option to display the errata that correspond to a specified CVE, for example:
+
+[root@test01 ~]# yum updateinfo list --cve CVE-2018-0732
+Loaded plugins: security
+ELSA-2018-4248 Important/Sec. openssl-1.0.1e-57.0.6.el6.x86_64
+updateinfo list done
+
+To display more information, specify info instead of list, for example:
+
+[root@test01 ~]# yum updateinfo info --cve CVE-2018-0732
+Loaded plugins: security
+
+=========================================================================   
+openssl security update
+=========================================================================
+  Update ID : ELSA-2018-4248
+    Release : Oracle Linux 6
+       Type : security
+     Status : final
+     Issued : 2018-10-12
+       CVEs : CVE-2018-0732
+	    : CVE-2018-0737
+Description : [1.0.1e-57.0.6]
+            : - Oracle bug 28730228: backport CVE-2018-0732
+            : - Oracle bug 28758493: backport CVE-2018-0737
+   Severity : Important
+updateinfo info done
+
+
+Installation:
+
+To update only those packages that correspond to a CVE or erratum, for example:
+
+[root@test01 ~]# yum update --cve CVE-2018-0732
+Loaded plugins: security
+Setting up Update Process
+Resolving Dependencies
+Limiting packages to security relevant ones
+1 package(s) needed (+0 related) for security, out of 140 available
+--> Running transaction check
+---> Package openssl.x86_64 0:1.0.1e-57.0.1.el6 will be updated
+---> Package openssl.x86_64 0:1.0.1e-57.0.6.el6 will be an update
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+==========================================================================================================================
+ Package                            Arch                              Version                                       Repository                                    Size
+==========================================================================================================================
+Updating:
+ openssl                            x86_64                            1.0.1e-57.0.6.el6                             public_ol6_latest                            1.5 M
+
+Transaction Summary
+==========================================================================================================================
+Upgrade       1 Package(s)
+
+Total download size: 1.5 M
+Is this ok [y/N]: 
+
+
+
+
+
+[root@test01 ~]# yum update --advisory ELSA-2018-4248
+Loaded plugins: security
+Setting up Update Process
+Resolving Dependencies
+Limiting packages to security relevant ones
+1 package(s) needed (+0 related) for security, out of 140 available
+--> Running transaction check
+---> Package openssl.x86_64 0:1.0.1e-57.0.1.el6 will be updated
+---> Package openssl.x86_64 0:1.0.1e-57.0.6.el6 will be an update
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+==========================================================================================================================
+ Package                            Arch                              Version                                       Repository                                    Size
+==========================================================================================================================
+Updating:
+ openssl                            x86_64                            1.0.1e-57.0.6.el6                             public_ol6_latest                            1.5 M
+
+Transaction Summary
+==========================================================================================================================
+Upgrade       1 Package(s)
+
+Total download size: 1.5 M
+Is this ok [y/N]: 
+
+
+
+SOURCE:
+https://docs.oracle.com/cd/E37670_01/E37355/html/ol_security_yum.html
