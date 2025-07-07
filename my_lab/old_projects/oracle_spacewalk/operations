@@ -1,0 +1,176 @@
+Spacewalk Proxy Configuration :
+
+
+
+After that reboot spacewalk service by invoking following command in terminal :
+
+# spacewalk-service restart
+
+Add NFS Volume :
+
+# spacewalk-service stop
+  
+#  mv /var/satellite/redhat /home/adnanreza/
+
+# vim /etc/fstab
+
+# nfs volume for Spacewalk packages
+192.168.97.65:/export/swalk 	/var/satellite 	nfs  	 rw,bg,hard,nointr,rsize=65536,wsize=65536,tcp,nfsvers=3,timeo=600,actimeo=700,acregmin=3,lock,suid
+
+# rpm -qa | grep nfs
+
+# cd /etc/yum.repos.d/
+
+#  cp -p public-yum-ol6.repo.rpmsave public-yum-ol6.repo
+
+# export http_proxy=http://192.168.102.30:3128 (For SE if proxy is not mentioned in /etc/yum.conf)
+			OR
+# export http_proxy=http://192.168.111.30:3128 (For FX if proxy is not mentioned in /etc/yum.conf)
+
+#  yum install nfs-utils
+
+#  rm -f public-yum-ol6.repo
+
+# service rpcbind start
+
+# mount /var/satellite/
+
+# df -h
+
+# mv /home/adnanreza/redhat /var/satellite/
+
+# ls -l /var/
+
+# chown apache:root /var/satellite
+
+# chown apache:root /var/satellite/redhat
+
+# chkconfig rpcbind --list
+
+# chkconfig rpcbind on
+
+# spacewalk-service start
+
+Solution of problem regarding osa-disptacher :
+
+Scenario : 
+
+# spacewalk-service start
+Starting spacewalk services...
+Initializing jabberd processes ...
+Starting router:                                           [  OK  ]
+Starting sm:                                               [  OK  ]
+Starting c2s:                                              [  OK  ]
+Starting s2s:                                              [  OK  ]
+Starting tomcat6:                                          [  OK  ]
+Waiting for tomcat to be ready ...
+Starting httpd:                                            [  OK  ]
+Starting osa-dispatcher: Spacewalk 3405 2018/03/15 03:32:34 -04:00: ('Not able to reconnect - See https://access.redhat.com/solutions/45332 for possible solutions.\n',)
+Spacewalk 3405 2018/03/15 03:32:34 -04:00: ('Error caught:',)
+
+ERROR: unhandled exception occurred: (can't write str to text stream).
+                                                           [FAILED]
+Starting rhn-search...
+Starting cobbler daemon:                                   [  OK  ]
+Starting RHN Taskomatic...
+Done.
+
+$ sudo grep 'corruption detected' /var/log/messages 
+Mar 15 03:32:20 prime01-ta jabberd/sm[3203]: db: corruption detected! close all jabberd processes and run db_recover
+
+Solution :
+
+# spacewalk-service stop
+
+Backup /etc/jabberd/sm.xml and change "<driver>db</driver>" to "<driver>sqlite</driver>" :
+
+# cp -p /etc/jabberd/sm.xml sm.xml.$(date +%F).bak
+# vim /etc/jabberd/sm.xml 
+# diff /etc/jabberd/sm.xml sm.xml.2018-03-15.bak 
+
+Backup /etc/jabberd/c2s.xml and change "<module>db</module>" to "<module>sqlite</module>":
+
+# pwd
+/home/<user_name>
+# cp -p /etc/jabberd/c2s.xml c2s.xml.$(date +%F).bak
+# vim /etc/jabberd/c2s.xml 
+# diff /etc/jabberd/c2s.xml c2s.xml.2018-03-15.bak 
+
+Create sqlite DB :
+
+# sqlite3 /var/lib/jabberd/db/sqlite.db < /usr/share/jabberd/db-setup.sqlite
+# chown jabber:jabber /var/lib/jabberd/db/sqlite.db 
+
+
+Start spacewalk and check services :
+
+# spacewalk-service start
+# spacewalk-service status
+
+Reference : 
+
+https://docs.oracle.com/cd/E92593_01/E85212/html/swk26-jabberd.html
+
+Add ULN login info to sync ULN repos :
+
+# ls -l /etc/rhn/spacewalk-repo-sync/uln.conf
+-r-------- 1 root root 65 Jun  1 06:28 /etc/rhn/spacewalk-repo-sync/uln.conf
+
+Add write access to this file :
+# chmod 600 /etc/rhn/spacewalk-repo-sync/uln.conf
+
+Add username and password of ULN login :
+#  vim /etc/rhn/spacewalk-repo-sync/uln.conf
+[main] 
+username=ULN_SSO_username 
+password=ULN_SSO_password
+
+
+Remove write access to this file :
+# chmod 400 /etc/rhn/spacewalk-repo-sync/uln.conf
+
+Create a parent channel :
+Channels -> Manage Software Channels -> Create Channel
+
+
+
+
+Create a Child Channel :
+Channels -> Manage Software Channels -> Create Channel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Create a repo with ULN repo url : 
+Channels -> Manage Software Channels -> Manage Repositories -> Create Repository
+
+
+Create a repo with public yum repo url :
+Channels -> Manage Software Channels -> Manage Repositories -> Create Repository
+
+ 
+Point a repo from a channel :
+Channels -> Manage Software Channels -> Select a channel -> Repositories -> Select a repo -> Update Repositories 
+
+
+Sync a repo :
+Channels -> Manage Software Channels -> Select a channel -> Repositories -> Sync -> Sync Now
+
+Create a key :
+Systems -> Activation Keys -> Create Key
+
+ 
