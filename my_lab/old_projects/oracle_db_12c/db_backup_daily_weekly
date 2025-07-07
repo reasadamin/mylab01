@@ -1,0 +1,91 @@
+Create Daily & weekly backup script, set it to the oracle user’s cron:
+
+Daily Script: 
+
+#!/bin/bash
+export ORACLE_SID=taspacewalk
+export ORACLE_HOME=/oracle/app/oracle/product/12.1.0/dbhome_1
+export PATH=$PATH:$HOME/bin:$ORACLE_HOME/bin
+
+$ORACLE_HOME/bin/rman target / log=/backup/rman/logs/backup_daily.log <<EOF
+backup incremental level=1 tag daily_lev1 database plus archivelog;
+delete noprompt archivelog all backed up 2 times to device type disk;
+crosscheck backup;
+crosscheck archivelog all;
+list backup summary;
+exit;
+EOF
+
+/bin/cat /backup/rman/logs/backup_daily.log | sed -n '/List of Backups/,/^$/p' | mailx -r "ops-alert@therapservices.net" -s "Spacewalk_Daily_Backup_Summary_TA" bdops@therapservices.net
+/bin/cat /backup/rman/logs/backup_daily.log >> /backup/rman/logs/backup_daily_archieve.log
+> /backup/rman/logs/backup_daily.log
+
+
+
+Weekly Script:
+
+#!/bin/bash
+export ORACLE_SID=taspacewalk
+export ORACLE_HOME=/oracle/app/oracle/product/12.1.0/dbhome_1
+export PATH=$PATH:$HOME/bin:$ORACLE_HOME/bin
+
+$ORACLE_HOME/bin/rman target / log=/backup/rman/logs/backup_weekly.log <<EOF
+backup incremental level=0 tag weekly_lev0 database plus archivelog;
+delete noprompt archivelog all backed up 2 times to device type disk;
+crosscheck backup;
+crosscheck archivelog all;
+delete noprompt obsolete;
+delete noprompt backup completed before 'sysdate-14';
+list backup summary;
+exit;
+EOF
+
+
+/bin/cat /backup/rman/logs/backup_weekly.log | sed -n '/List of Backups/,/^$/p' | mailx -r "ops-alert@therapservices.net" -s "Spacewalk_Weekly_Backup_Summary_TA" bdops@therapservices.net
+
+/bin/cat /backup/rman/logs/backup_weekly.log >> /backup/rman/logs/backup_weekly_archieve.log
+> /backup/rman/logs/backup_weekly.log
+
+
+
+Edit the cron tab file of oracle user with the following:
+
+30 15 * * 1-5 /home/oracle/rman_backup_daily.sh
+30 15 * * 0 /home/oracle/rman_backup_weekly.sh
+
+
+Received Mail:
+On Mon, Oct 1, 2018 at 1:33 PM, <ops-alert@therapservices.net> wrote:
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time #Pieces #Copies Compressed Tag
+------- -- -- - ----------- --------------- ------- ------- ---------- ---
+1156    B  0  A DISK        23-SEP-18       1       1       YES        WEEKLY_LEV0
+1157    B  A  A DISK        23-SEP-18       1       1       YES        WEEKLY_LEV0
+1159    B  A  A DISK        24-SEP-18       1       1       YES        DAILY_LEV1
+1160    B  1  A DISK        24-SEP-18       1       1       YES        DAILY_LEV1
+1161    B  A  A DISK        24-SEP-18       1       1       YES        DAILY_LEV1
+1163    B  A  A DISK        25-SEP-18       1       1       YES        DAILY_LEV1
+1164    B  1  A DISK        25-SEP-18       1       1       YES        DAILY_LEV1
+1165    B  A  A DISK        25-SEP-18       1       1       YES        DAILY_LEV1
+1167    B  A  A DISK        26-SEP-18       1       1       YES        DAILY_LEV1
+1168    B  1  A DISK        26-SEP-18       1       1       YES        DAILY_LEV1
+1169    B  A  A DISK        26-SEP-18       1       1       YES        DAILY_LEV1
+1171    B  A  A DISK        27-SEP-18       1       1       YES        DAILY_LEV1
+1172    B  1  A DISK        27-SEP-18       1       1       YES        DAILY_LEV1
+1173    B  A  A DISK        27-SEP-18       1       1       YES        DAILY_LEV1
+1175    B  A  A DISK        28-SEP-18       1       1       YES        DAILY_LEV1
+1176    B  1  A DISK        28-SEP-18       1       1       YES        DAILY_LEV1
+1177    B  A  A DISK        28-SEP-18       1       1       YES        DAILY_LEV1
+1179    B  A  A DISK        29-SEP-18       1       1       YES        DAILY_LEV1
+1180    B  1  A DISK        29-SEP-18       1       1       YES        DAILY_LEV1
+1181    B  A  A DISK        29-SEP-18       1       1       YES        DAILY_LEV1
+1182    B  F  A DISK        29-SEP-18       1       1       NO         TAG20180929T040411
+1183    B  A  A DISK        30-SEP-18       1       1       YES        WEEKLY_LEV0
+1184    B  0  A DISK        30-SEP-18       1       1       YES        WEEKLY_LEV0
+1185    B  A  A DISK        30-SEP-18       1       1       YES        WEEKLY_LEV0
+1186    B  F  A DISK        30-SEP-18       1       1       NO         TAG20180930T034528
+1187    B  A  A DISK        01-OCT-18       1       1       YES        DAILY_LEV1
+1188    B  1  A DISK        01-OCT-18       1       1       YES        DAILY_LEV1
+1189    B  A  A DISK        01-OCT-18       1       1       YES        DAILY_LEV1
+1190    B  F  A DISK        01-OCT-18       1       1       NO         TAG20181001T033327

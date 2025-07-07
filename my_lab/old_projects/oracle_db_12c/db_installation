@@ -1,0 +1,276 @@
+# service iptables stop && service ip6tables stop && chkconfig iptables off && chkconfig ip6tables off
+
+# vim /etc/hosts
+192.168.5.127 db12c
+
+# yum update -y
+
+# yum install oracle-rdbms-server-12cR1-preinstall -y
+– This will create oracle user and oinstall & dba group, also set the system parameters and install the required packages.
+
+# passwd oracle
+
+# id oracle
+
+Required Directories:
+INVENTORY_LOCATION=/u01/app/oraInventory
+ORACLE_HOME=/u01/app/oracle/product/12.1.0/dbhome_1
+ORACLE_BASE=/u01/app/oracle
+
+# mkdir -p /u01/app/oracle/product/12.1.0/dbhome_1
+# mkdir -p /u01/app/oraInventory
+# mkdir -p /u01/app/oracle/oradata
+# mkdir -p /u01/app/oracle/recovery_area
+# chown -R oracle:oinstall /u01/
+# chown -R oracle:oinstall /home/oracle/
+# chmod -R 755 /home/oracle/
+
+# vim /etc/sudoers
+oracle ALL=(ALL) ALL
+
+#vim /etc/selinux/config
+SELINUX=disabled
+
+## Change this line as folloing##
+
+# vim /etc/security/limits.d/oracle-rdbms-server-12cR1-preinstall.conf
+oracle soft nofile 4096
+
+Make sure that these valus are set like the following
+# vim /etc/sysctl.conf
+fs.file-max = 6815744
+kernel.sem = 250 32000 100 128
+kernel.shmmni = 4096
+kernel.shmall = 1073741824
+kernel.shmmax = 4398046511104
+net.core.rmem_default = 262144
+net.core.rmem_max = 4194304
+net.core.wmem_default = 262144
+net.core.wmem_max = 1048576
+fs.aio-max-nr = 1048576
+net.ipv4.ip_local_port_range = 9000 65500
+
+# sysctl -p
+
+# vim /etc/security/limits.d/90-nproc.conf
+* – nproc 1024
+
+If RAM is less than 8 GB
+# vim /etc/fstab
+tmpfs /dev/shm tmpfs defaults,size=4G 0 0
+
+# su oracle
+
+# vim .bash_profile
+export ORACLE_HOME=/u01/app/oracle/product/12.1.0/dbhome_1
+export ORACLE_SID=dbtest
+export ORACLE_BASE=/u01/app/oracle
+PATH=$PATH:$HOME/bin:$ORACLE_HOME/bin
+export PATH
+
+# . .bash_profile
+
+# ulimit -n (check)
+
+# reboot the OS
+
+Now, download oracle database 12c files.
+[oracle@db12c ~]$ ls
+linuxamd64_12102_database_2of2.zip
+linuxamd64_12102_database_1of2.zip
+uzip both of them,
+[oracle@db12c ~]$ unzip linuxamd64_12102_database_1of2.zip
+[oracle@db12c ~]$ unzip linuxamd64_12102_database_2of2.zip
+[oracle@db12c ~]$ ls
+database linuxamd64_12102_database_2of2.zip linuxamd64_12102_database_1of2.zip
+Now, if you want to bypass swap checking
+
+[oracle@db12c ~]$ vim database/install/oraparam.ini
+#SWAP_SPACE=150 (# the line)
+Now prepare the response files:
+
+[oracle@db12c ~]$ cd database/response/
+
+[oracle@db12c response]$ ls
+dbca.rsp db_install.rsp netca.rsp
+
+[oracle@db12c response]$ vim db_install.rsp
+
+Make changes the following lines:
+
+oracle.install.option=INSTALL_DB_AND_CONFIG
+ORACLE_HOSTNAME=dbtest
+UNIX_GROUP_NAME=oinstall
+INVENTORY_LOCATION=/u01/app/oraInventory
+SELECTED_LANGUAGES=en
+ORACLE_HOME=/u01/app/oracle/product/12.1.0/dbhome_1
+ORACLE_BASE=/u01/app/oracle
+oracle.install.db.InstallEdition=EE
+oracle.install.db.DBA_GROUP=dba
+oracle.install.db.OPER_GROUP=dba
+oracle.install.db.BACKUPDBA_GROUP=dba
+oracle.install.db.DGDBA_GROUP=dba
+oracle.install.db.KMDBA_GROUP=dba
+oracle.install.db.isRACOneInstall=false
+oracle.install.db.rac.serverpoolCardinality=0
+oracle.install.db.config.starterdb.type=GENERAL_PURPOSE
+oracle.install.db.config.starterdb.globalDBName=dboem
+oracle.install.db.config.starterdb.SID=dbtest
+oracle.install.db.ConfigureAsContainerDB=false
+oracle.install.db.config.starterdb.characterSet=AL32UTF8
+oracle.install.db.config.starterdb.memoryOption=true
+oracle.install.db.config.starterdb.memoryLimit=1024
+oracle.install.db.config.starterdb.installExampleSchemas=true
+oracle.install.db.config.starterdb.password.ALL=sysman123
+oracle.install.db.config.starterdb.managementOption=DEFAULT
+oracle.install.db.config.starterdb.storageType=FILE_SYSTEM_STORAGE
+oracle.install.db.config.starterdb.fileSystemStorage.dataLocation=/u01/app/oracle/oradata
+oracle.install.db.config.starterdb.fileSystemStorage.recoveryLocation=/u01/app/oracle/recovery_area
+MYORACLESUPPORT_USERNAME=shamrat@xyz.net
+SECURITY_UPDATES_VIA_MYORACLESUPPORT=false
+DECLINE_SECURITY_UPDATES=true
+
+Save & Exit
+Now, create a cfgrsp.properties file like the following, with the passwd you want, to create db instance:
+
+[oracle@db12c database]$ vim cfgrsp.properties
+oracle.assistants.server|S_SYSPASSWORD=sysman123
+oracle.assistants.server|S_SYSTEMPASSWORD=sysman123
+oracle.assistants.server|S_DBSNMPPASSWORD=sysman123
+oracle.assistants.server|S_PDBADMINPASSWORD=sysman123
+oracle.assistants.server|S_EMADMINPASSWORD=sysman123
+oracle.assistants.server|S_ASMSNMPPASSWORD=
+
+Save & Exit
+Now, run the installer with the response file
+
+# cd oracle_db_12c/database/
+
+# sh runInstaller -silent -responsefile /path_to_responsfile/db_install.rsp -showProgress
+=============================================================
+[oracle@db12c database]$ sh runInstaller -silent -responsefile /home/oracle/db_install_final.rsp -showProgress
+Starting Oracle Universal Installer…
+Checking Temp space: must be greater than 500 MB. Actual 15193 MB Passed
+Preparing to launch Oracle Universal Installer from /tmp/OraInstall2016-02-15_12-44-02AM. Please wait …[oracle@db12c database]$ [WARNING] [INS-30011] The ADMIN password entered does not conform to the Oracle recommended standards.
+CAUSE: Oracle recommends that the password entered should be at least 8 characters in length, contain at least 1 uppercase character, 1 lower case character and 1 digit [0-9].
+ACTION: Provide a password that conforms to the Oracle recommended standards.
+[WARNING] [INS-13014] Target environment does not meet some optional requirements.
+CAUSE: Some of the optional prerequisites are not met. See logs for details. /tmp/OraInstall2016-02-15_12-44-02AM/installActions2016-02-15_12-44-02AM.log
+ACTION: Identify the list of failed prerequisite checks from the log: /tmp/OraInstall2016-02-15_12-44-02AM/installActions2016-02-15_12-44-02AM.log. Then either from the log file or from installation manual find the appropriate configuration to meet the prerequisites and fix it manually.
+You can find the log of this install session at:
+/u01/app/oraInventory/logs/installActions2016-02-15_12-44-02AM.log
+Prepare in progress.
+………………………………………….. 8% Done.
+Prepare successful.
+Copy files in progress.
+………………………………………….. 16% Done.
+………………………………………….. 21% Done.
+………………………………………….. 26% Done.
+………………………………………….. 31% Done.
+………………………………………….. 37% Done.
+………………………………………….. 43% Done.
+………………………………………….. 49% Done.
+………………………………………….. 54% Done.
+………………………………………….. 59% Done.
+………………………………………….. 64% Done.
+………………………………………….. 69% Done.
+………………..
+Copy files successful.
+Link binaries in progress.
+……….
+Link binaries successful.
+Setup files in progress.
+………………………………………….. 74% Done.
+Setup files successful.
+Setup Inventory in progress.
+Setup Inventory successful.
+………………………………………….. 80% Done.
+Finish Setup successful.
+The installation of Oracle Database 12c was successful.
+Please check ‘/u01/app/oraInventory/logs/silentInstall2016-02-15_12-44-02AM.log’ for more details.
+Setup Oracle Base in progress.
+Setup Oracle Base successful.
+………………………………………….. 90% Done.
+Prepare for configuration steps in progress.
+Prepare for configuration steps successful.
+………………………………………….. 95% Done.
+As a root user, execute the following script(s):
+1. /u01/app/oraInventory/orainstRoot.sh
+2. /u01/app/oracle/product/12.1.0/dbhome_1/root.sh
+………………………………………….. 100% Done.
+Successfully Setup Software.
+
+As an install user, execute the following script to complete the configuration.
+1. /u01/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/configToolAllCommands RESPONSE_FILE=<response_file>
+Note:
+
+1. This script must be run on the same host from where the installer was run.
+
+2. This script needs a small password properties file for configuration assistants that require passwords (refer to install guide documentation).
+
+
+===================================================
+
+[root@db12c ~]# /u01/app/oraInventory/orainstRoot.sh
+Changing permissions of /u01/app/oraInventory.
+Adding read,write permissions for group.
+Removing read,write,execute permissions for world.
+Changing groupname of /u01/app/oraInventory to oinstall.
+The execution of the script is complete.
+
+[root@db12c ~]# /u01/app/oracle/product/12.1.0/dbhome_1/root.sh
+Check /u01/app/oracle/product/12.1.0/dbhome_1/install/root_db12c_2016-02-15_00-54-46.log for the output of root script
+
+[root@db12c ~]#
+
+=================================================
+[oracle@db12c database]$ /u01/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/configToolAllCommands RESPONSE_FILE=/home/oracle/cfgrsp.properties
+It will take a little time to complete 100%
+.
+.
+.
+INFO: Read: 91% complete
+Feb 15, 2016 1:16:08 AM oracle.install.driver.oui.config.GenericInternalPlugIn handleProcess
+WARNING: Skipping line: 91% complete
+Feb 15, 2016 1:16:08 AM oracle.install.driver.oui.config.GenericInternalPlugIn handleProcess
+INFO: Read: 100% complete
+Feb 15, 2016 1:16:08 AM oracle.install.driver.oui.config.GenericInternalPlugIn handleProcess
+WARNING: Skipping line: 100% complete
+Feb 15, 2016 1:16:08 AM oracle.install.driver.oui.config.GenericInternalPlugIn handleProcess
+INFO: Read: Look at the log file “/u01/app/oracle/cfgtoollogs/dbca/dbtest/dbtest.log” for further details.
+Feb 15, 2016 1:16:08 AM oracle.install.driver.oui.config.GenericInternalPlugIn handleProcess
+WARNING: Skipping line: Look at the log file “/u01/app/oracle/cfgtoollogs/dbca/dbtest/dbtest.log” for further details.
+perform – mode finished for action: configure
+You can see the log file: /u01/app/oracle/product/12.1.0/dbhome_1/cfgtoollogs/oui/configActions2016-02-15_12-56-57-AM.log
+
+
+[oracle@db12c database]$ sqlplus / as sysdba
+SQL*Plus: Release 12.1.0.2.0 Production on Mon Feb 15 01:19:11 2016
+Copyright (c) 1982, 2014, Oracle. All rights reserved.
+Connected to:
+Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 – 64bit Production
+With the Partitioning, OLAP, Advanced Analytics and Real Application Testing options
+
+SQL> show sga
+Total System Global Area 1073741824 bytes
+Fixed Size 2932632 bytes
+Variable Size 620757096 bytes
+Database Buffers 444596224 bytes
+Redo Buffers 5455872 bytes
+
+SQL>
+SQL>
+SQL>
+SQL>
+
+Or you can also try dbca to create database,
+To do that,
+
+#cd $ORACLE_HOME/bin
+
+./dbca -silent -createDatabase -templateName General_Purpose.dbc -gdbName dboem -sid dboem -SysPassword sysman123 -SystemPassword sysman123 -emConfiguration NONE -datafileDestination /usr/local/oradata -storageType FS -characterSet AL32UTF8 -totalMemory 4096
+
+# ps -ef |grep oracle
+# ipcs -a
+
+# sqlplus / as sysdba

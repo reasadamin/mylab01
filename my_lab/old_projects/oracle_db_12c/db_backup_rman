@@ -1,0 +1,41 @@
+Make the following changes in the OS:
+
+# mkdir -p /backup/fra/app/oracle/fast_recovery_area/
+# chown -R oracle:oinstall /backup/
+# chmod -R 775 /backup/
+# mkdir -p /backup/rman/taspacewalk
+# mkdir -p /backup/rman/logs/
+
+Connect to rman consol: 
+
+# RMAN> rman
+# RMAN> connect target /
+# RMAN> ALTER SYSTEM SET DB_RECOVERY_FILE_DEST_SIZE = 10G;
+# RMAN> ALTER SYSTEM SET DB_RECOVERY_FILE_DEST = '/u01/app/oracle/fast_recovery_area/';
+
+# RMAN> show all;
+# RMAN> configure controlfile autobackup on;
+# RMAN> configure controlfile autobackup format for device type disk to '/backup/rman/taspacewalk/%F';
+# RMAN> configure channel device type disk format '/backup/rman/taspacewalk/%U';
+# RMAN> configure device type disk backup type to compressed backupset;
+# RMAN> configure retention policy to redundancy 2;
+
+-----
+Connect to sqlplus:
+Alter database to Archive log mode: 
+
+SQL> shutdown immediate;
+SQL> startup mount
+SQL> alter database archivelog;
+SQL> shutdown immediate;
+SQL> startup
+
+SQL> archive log list;
+SQL> select log_mode from v$database;
+SQL> show parameter recovery
+SQL> archive log list
+
+Connect to rman consol:
+Take the first backup
+
+RMAN> list backup of database;
