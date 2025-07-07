@@ -1,0 +1,324 @@
+To install auditd:
+# yum install audit
+
+# config file: /etc/audit/auditd.conf
+to modify the size of log file
+max_log_file = 6 (size of log file 6MB)
+max_log_file_action = ROTATE
+# logfile: /var/log/audit/audit.log
+
+How auditd works:
+The Audit system consists of two main parts: the user-space applications and utilities, and the kernel-side system call processing. The kernel component receives system calls from user-space applications and filters them through one of the three filters: user, task, or exit. Once a system call passes through one of these filters, it is sent through the exclude filter, which, based on the Audit rule configuration, sends it to the Audit daemon for further processing.
+
+Tools:
+auditctl - an utility to assist controlling the kernel’s audit system
+ausearch - a tool to query audit daemon logs
+aureport - a tool that produces summary reports of audit daemon logs
+
+Audit Rules:
+There are three types of Audit rules that can be specified:
+
+Control rules — allow the Audit system's behavior and some of its configuration to be modified. 	
+File system rules — also known as file watches, allow the auditing of access to a particular file or a directory.
+System call rules — allow logging of system calls that any specified program makes. 				
+
+We’ll use auditctl command to define different rules
+
+Now let’s create some File system rule and System call rule and find out how they log system activities.
+
+## If we want to monitor activities over a particular directory
+auditctl -w /etc/sudoers -p rwa -k sudoers-change
+-w = record request
+-p = permission  access  type  that  a  file  system  watch  will trigger on (read, write, or attribute change access)
+-k = tag
+
+## to view the log
+ausearch -k sudoers-change
+log:
+time->Tue Nov 24 15:55:56 2015
+type=PATH msg=audit(1448358956.327:5875): item=0 name="/etc/sudoers" inode=272582 dev=08:01 mode=0100440 ouid=0 ogid=0 rdev=00:00
+type=CWD msg=audit(1448358956.327:5875):  cwd="/home/shamrat"
+type=SYSCALL msg=audit(1448358956.327:5875): arch=c000003e syscall=2 success=yes exit=3 a0=7fff9966e921 a1=0 a2=0 a3=60 items=1 ppid=12879 pid=12882 auid=54324 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 ses=490 tty=pts2 comm="tail" exe="/usr/bin/tail" key="sudoers-change"
+
+
+Examples: 
+auditctl -w /etc/ssh/sshd_config -p wa -k ssh-change
+auditctl -w /etc/passwd -p wa -k passwd-change
+auditctl -w /etc/shadow -p wa -k shadow-change
+
+
+##Rules for system call monitoring:
+Default Syntax:
+	auditctl -a action,filter -S system_call -F field=value -k key_name
+	-a= Append rule to the end of list with action. Comma separates two different values action & list
+	      filter consist of:
+		task: Add  a  rule to the per task list.
+		exit: Add  a  rule  to  the syscall exit list.
+		user: Add a rule to the user message filter list.
+		exclude: Add  a  rule  to the event type exclusion filter list.
+	action consist of:
+		never:  No  audit  records will be generated.
+		always: Allocate an audit context, always fill it in at syscall entry time, and always write out  a  record  at  syscall  exit
+                      	time.
+	-S= system call
+	-F= rule field, we can set upto 64 fields on a single command line
+
+Examples:	
+auditctl -a always,exit -F arch=b64 -S unlink -S unlinkat -S rename -S renameat -F "auid>=54321" -k delete_file
+these rule will create a log entry every time a file will be deleted or renamed by any system user with a uid greater than or equal to 54321
+	
+log:
+** user shamrat deletes a file file1
+[root@dboem ~]# id shamrat
+uid=54324(shamrat) gid=54325(shamrat) groups=54325(shamrat)
+----
+time->Thu Dec 24 11:41:43 2015
+type=PATH msg=audit(1450935703.658:15324): item=1 name="file1" inode=524312 dev=08:02 mode=0100664 ouid=54324 ogid=54325 rdev=00:00
+type=PATH msg=audit(1450935703.658:15324): item=0 name="/home/shamrat" inode=524299 dev=08:02 mode=040700 ouid=54324 ogid=54325 rdev=00:00
+type=CWD msg=audit(1450935703.658:15324):  cwd="/home/shamrat"
+type=SYSCALL msg=audit(1450935703.658:15324): arch=c000003e syscall=263 success=yes exit=0 a0=ffffffffffffff9c a1=9d6fe0 a2=0 a3=20 items=2 ppid=27549 pid=18903 auid=54324 uid=54324 gid=54325 euid=54324 suid=54324 fsuid=54324 egid=54325 sgid=54325 fsgid=54325 ses=168 tty=pts1 comm="rm" exe="/bin/rm" key="delete_file"
+
+
+
+
+
+
+# It is also possible to define a file system rule using the system call rule syntax.
+auditctl -a always,exit -F path=/etc/shadow -F perm=wa
+similar as -w /etc/shadow -p wa
+
+# If we want to monitor activities of a particular user:
+auditctl -a always,exit -F arch=b64 -F auid=54324 -S open -k user_shamrat
+
+Log:
+time->Thu Dec 24 11:52:13 2015
+type=PATH msg=audit(1450936333.847:15483): item=0 name="/usr/lib64/gconv/gconv-modules.cache" inode=134832 dev=08:01 mode=0100644 ouid=0 ogid=0 rdev=00:00
+type=CWD msg=audit(1450936333.847:15483):  cwd="/home/shamrat"
+type=SYSCALL msg=audit(1450936333.847:15483): arch=c000003e syscall=2 success=yes exit=3 a0=3282b583e0 a1=0 a2=0 a3=0 items=1 ppid=27549 pid=19107 auid=54324 uid=54324 gid=54325 euid=54324 suid=54324 fsuid=54324 egid=54325 sgid=54325 fsgid=54325 ses=168 tty=pts1 comm="df" exe="/bin/df" key="user_shamrat"
+----
+
+time->Thu Dec 24 11:52:20 2015
+type=PATH msg=audit(1450936340.553:15488): item=0 name="/etc/passwd" inode=278127 dev=08:01 mode=0100644 ouid=0 ogid=0 rdev=00:00
+type=CWD msg=audit(1450936340.553:15488):  cwd="/home/shamrat"
+type=SYSCALL msg=audit(1450936340.553:15488): arch=c000003e syscall=2 success=yes exit=3 a0=7fffa3321819 a1=0 a2=7fffa3321330 a3=a items=1 ppid=27549 pid=19108 auid=54324 uid=54324 gid=54325 euid=54324 suid=54324 fsuid=54324 egid=54325 sgid=54325 fsgid=54325 ses=168 tty=pts1 comm="cat" exe="/bin/cat" key="user_shamrat"
+
+## If we want to see the list of applied audit rules:
+auditctl -l
+
+[root@dboem ~]# auditctl -l
+-a always,exit -F arch=x86_64 -S rename,unlink,unlinkat,renameat -F auid>=54321 -F key=delete_file
+-a always,exit -F arch=x86_64 -S open -F auid=54324 -F key=user_shamrat
+-w /etc/ssh/sshd_config -p wa -k ssh-change
+-w /etc/passwd -p wa -k passwd-change
+-w /etc/shadow -p wa -k shadow-change
+
+
+
+PAM Auditing:
+The audit system in Red Hat Enterprise Linux uses the pam_tty_audit PAM module to enable or disable auditing of TTY input for specified users. When the audited user logs in, pam_tty_audit records the exact keystrokes the user makes into the /var/log/audit/audit.log file.
+
+## configuration:
+cat /etc/pam.d/system-auth
+session 	required  	pam_tty_audit.so disable=* enable=root,shamrat,reza,alok
+cat /etc/pam.d/password-auth
+session	required 	pam_tty_audit.so disable=* enable=root,shamrat,reza,alok log_passwd
+
+
+750. 12/24/2015 12:04:20 15636 root ? 1 bash "auditctl -w /etc/passwd -p wa -k passwd-change",<ret>
+751. 12/24/2015 12:04:26 15639 root ? 1 bash "auditctl -w /etc/shadow -p wa -k shadow-change",<ret>
+752. 12/24/2015 12:04:43 15646 root ? 1 bash "auditc",<tab>,"-l",<ret>
+753. 12/24/2015 12:13:14 15711 root ? 1 bash "cat /etc/pam.d/system-auth",<ret>
+754. 12/24/2015 12:16:40 15772 root ? 1 bash "cat /etc/pam.d/password-auth",<ret>
+755. 12/24/2015 12:21:30 15907 shamrat ? 168 sudo "therap",<nl>
+756. 12/24/2015 12:21:54 16105 root ? 1 bash <^L>,"aureport --tty | s",<backspace>,<backspace>," grep shamrat",<ret>
+757. 12/24/2015 12:22:55 16113 root ? 1 bash <up>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,<backspace>,"| tail -100",<ret>
+758. 12/24/2015 12:23:25 16122 shamrat ? 168 vim <esc>,"[>1;3409;0c",<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<down>,<esc>,":x",<ret>
+759. 12/24/2015 12:23:31 16127 root ? 1 bash <up>,<ret>
+760. 12/24/2015 12:23:57 16135 root ? 1 bash <up>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>," -i",<ret>
+761. 12/24/2015 12:24:17 16404 shamrat ? 168 vim <esc>,"[>1;3409;0c",<esc>,":x",<ret>
+762. 12/24/2015 12:24:20 16409 root ? 1 bash <up>,<ret>
+763. 12/24/2015 12:24:42 16413 root ? 1 bash <up>,<ret>
+764. 12/24/2015 12:25:07 16417 root ? 1 bash <up>,<ret>
+765. 12/24/2015 12:25:11 16419 root ? 1 bash <up>,<ret>
+766. 12/24/2015 12:25:17 16423 root ? 1 bash <up>,<ret>
+767. 12/24/2015 12:25:38 16527 root ? 1 bash <up>,<ret>
+768. 12/24/2015 12:25:46 16534 root ? 1 bash <up>,<ret>
+769. 12/24/2015 12:26:12 16811 shamrat ? 168 vim <esc>,"[>1;3409;0c",<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<right>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<left>,<up>,<up>,<up>,"i#",<backspace>,<esc>,":x",<ret>
+770. 12/24/2015 12:26:15 16818 root ? 1 bash <up>,<^L>,<ret>
+771. 12/24/2015 12:30:33 16850 root ? 1 bash <up>,<up>,<up>,<up>,<up>,<ret>
+772. 12/24/2015 13:00:08 17172 root ? 1 bash <up>,<up>,<up>,<up>,<up>,<up>,<up>,<down>,<down>,<down>,<down>,<down>,<down>,<up>,<up>,<up>,<down>,<down>,<down>,<down>,<down>,<down>,<up>,<up>,<up>,<up>,<up>,<up>,<down>,<ret>
+773. 12/24/2015 13:04:19 17251 root ? 1 bash <up>,<up>,<up>,<ret>
+
+
+
+*** The main problem is, pam_tty_audit also logs the sudo password when users type it in the terminal
+755. 12/24/2015 12:21:30 15907 shamrat ? 168 sudo "therap",<nl>
+
+
+
+Searching audit log file:
+Use of aureport :
+
+
+[root@dboem ~]# aureport -c -i
+
+Config Change Report
+===================================
+# date time type auid success event
+===================================
+1. 11/25/2015 10:48:15 CONFIG_CHANGE root yes 994887
+2. 11/25/2015 10:48:17 CONFIG_CHANGE root yes 994891
+3. 11/25/2015 10:50:50 CONFIG_CHANGE root yes 994901
+4. 11/25/2015 10:53:52 CONFIG_CHANGE root yes 994955
+
+
+[root@dboem ~]# aureport -au -i
+
+Authentication Report
+============================================
+# date time acct host term exe success event
+============================================
+1. 11/25/2015 10:52:38 root 192.168.6.11 ssh /usr/sbin/sshd no 994927
+2. 11/25/2015 10:52:40 root shamrat.therapbd.net ssh /usr/sbin/sshd yes 994928
+3. 11/25/2015 10:52:40 root 192.168.6.11 ssh /usr/sbin/sshd yes 994931
+4. 11/25/2015 10:54:13 alok 192.168.6.11 ssh /usr/sbin/sshd no 994962
+10. 11/25/2015 10:55:46 shamrat 192.168.6.11 ssh /usr/sbin/sshd no 995008
+11. 11/25/2015 10:55:48 shamrat shamrat.therapbd.net ssh /usr/sbin/sshd yes 995009
+12. 11/25/2015 10:55:48 shamrat 192.168.6.11 ssh /usr/sbin/sshd yes 995012
+
+
+[root@dboem ~]# aureport -cr -i
+
+Crypto Report
+===================================
+# date time auid type success event
+===================================
+1. 11/25/2015 10:52:13 shamrat CRYPTO_KEY_USER yes 994904
+2. 11/25/2015 10:52:13 shamrat CRYPTO_KEY_USER yes 994907
+3. 11/25/2015 10:52:13 shamrat CRYPTO_KEY_USER yes 994908
+4. 11/25/2015 10:52:16 alok CRYPTO_KEY_USER yes 994911
+5. 11/25/2015 10:52:16 alok CRYPTO_KEY_USER yes 994914
+6. 11/25/2015 10:52:16 alok CRYPTO_KEY_USER yes 994915
+7. 11/25/2015 10:52:30 root CRYPTO_KEY_USER yes 994920
+
+
+
+[root@dboem ~]# aureport -e -i | less
+Event Report
+===================================
+# date    time    event    type    auid    success
+===================================
+38091. 12/24/2015 13:42:45 17650 SYSCALL shamrat no
+38092. 12/24/2015 13:42:45 17651 SYSCALL shamrat no
+38093. 12/24/2015 13:42:45 17652 SYSCALL shamrat no
+38094. 12/24/2015 13:42:45 17653 SYSCALL shamrat no
+38095. 12/24/2015 13:42:45 17654 SYSCALL shamrat no
+38096. 12/24/2015 13:42:45 17655 SYSCALL shamrat no
+38097. 12/24/2015 13:42:45 17656 SYSCALL shamrat no
+38098. 12/24/2015 13:42:58 17658 USER_TTY root unset
+38099. 12/24/2015 13:42:58 17657 TTY root unset
+38100. 12/24/2015 13:43:08 17660 USER_TTY root unset
+38101. 12/24/2015 13:43:08 17659 TTY root unset
+
+
+[root@dboem ~]# aureport -f -i | less
+File Report
+===============================================
+# date     time     file     syscall     success     exe     auid     event
+===============================================
+48502. 11/29/2015 11:14:59 /var/log/wtmp open yes /usr/sbin/sshd shamrat 1001846
+48503. 11/29/2015 11:14:59 /root/.bash_history open yes /bin/bash shamrat 1001849
+48504. 11/29/2015 11:14:59 /root/.bash_history open yes /bin/bash shamrat 1001850
+48505. 11/29/2015 11:14:59 /etc/security/pam_env.conf open yes /bin/su shamrat 1001851
+48506. 11/29/2015 11:14:59 /etc/environment open yes /bin/su shamrat 1001852
+48507. 11/29/2015 11:14:59 /etc/passwd open yes /bin/su shamrat 1001854
+
+
+
+[root@dboem ~]# aureport -h -i | less
+Host Report
+===================================
+#   date     time     host     syscall      auid     event
+===================================
+28. 11/25/2015 10:52:13 192.168.6.11 ? shamrat 994904
+29. 11/25/2015 10:52:13 shamrat.therapbd.net ? shamrat 994905
+30. 11/25/2015 10:52:13 shamrat.therapbd.net ? shamrat 994906
+31. 11/25/2015 10:52:13 192.168.6.11 ? shamrat 994907
+32. 11/25/2015 10:52:13 192.168.6.11 ? shamrat 994908
+33. 11/25/2015 10:52:16 ? ? alok 994909
+34. 11/25/2015 10:52:16 ? ? alok 994910
+35. 11/25/2015 10:52:16 192.168.6.11 ? alok 994911
+36. 11/25/2015 10:52:16 shamrat.therapbd.net ? alok 994912
+
+
+[root@dboem ~]# aureport -m -i
+
+Account Modifications Report
+=================================================
+#   date     time     auid     addr     term     exe     acct    success    event
+=================================================
+1. 12/21/2015 17:26:47 root ? pts/0 /usr/bin/passwd shamrat yes 155
+2. 12/21/2015 17:26:47 root ? pts/0 /usr/bin/passwd ? yes 156
+3. 12/21/2015 17:26:56 root ? pts/0 /usr/bin/passwd shamrat yes 161
+4. 12/21/2015 17:26:56 root ? pts/0 /usr/bin/passwd ? yes 162
+
+
+[root@dboem ~]# aureport -p -i | less
+
+Process ID Report
+======================================
+# date time pid exe syscall auid event
+======================================
+54403. 12/22/2015 11:39:43 25347 /usr/sbin/sshd ? shamrat 1134
+54404. 12/22/2015 11:39:43 25344 /usr/sbin/sshd ? shamrat 1135
+54405. 12/22/2015 11:39:43 25344 /usr/sbin/sshd ? shamrat 1136
+54406. 12/22/2015 11:39:52 2119 ? ? root 1138
+54407. 12/22/2015 11:39:52 2119 ? ? root 1140
+
+
+[root@dboem ~]# aureport -s -i | less
+
+Syscall Report
+=======================================
+# date time syscall pid comm auid event
+=======================================
+1. 11/25/2015 10:07:13 open 32628 perl oracle 948641
+2. 11/25/2015 10:07:13 open 32628 perl oracle 948642
+48489. 11/28/2015 19:15:20 open 24260 cat shamrat 1001126
+48490. 11/28/2015 19:15:20 open 24260 cat shamrat 1001127
+48491. 11/28/2015 19:15:20 open 24260 cat shamrat 1001128
+48492. 11/28/2015 19:15:20 open 24260 cat shamrat 1001129
+48493. 11/29/2015 11:14:59 open 24191 sshd shamrat 1001836
+
+
+[root@dboem ~]# aureport -ts 12/22/2015 13:00:01
+
+Summary Report
+======================
+Range of time in logs: 12/22/2015 13:00:01.148 - 12/22/2015 13:40:36.968
+Selected time for report: 12/22/2015 13:00:01 - 12/22/2015 13:40:36.968
+Number of changes in configuration: 1
+Number of changes to accounts, groups, or roles: 0
+Number of logins: 2
+Number of failed logins: 0
+Number of authentications: 4
+Number of failed authentications: 2
+Number of users: 3
+Number of terminals: 6
+Number of host names: 5
+Number of executables: 2
+Number of files: 0
+Number of AVC's: 0
+Number of MAC events: 0
+Number of failed syscalls: 0
+Number of anomaly events: 0
+Number of responses to anomaly events: 0
+Number of crypto events: 15
+Number of keys: 0
+Number of process IDs: 17
+Number of events: 212
+
+
+[root@dboem ~]# aureport -x -if /var/log/audit/audit.log.2 -i
+
+To view log from a previous log archive 
