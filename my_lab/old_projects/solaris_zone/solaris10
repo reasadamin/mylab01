@@ -1,0 +1,226 @@
+Solaris 10 
+
+Now First create file structure :
+
+# cd /zones
+# mkdir db26-bd-home  db26-bd-zone
+
+
+**** Zone root file system db26-bd-zone & db26-bd-zone must have 700 permission  
+
+# chmod 700 db26-bd-zone
+
+
+
+Now configure a non global zone :
+
+bash-3.2# zonecfg -z db26-bd
+db21-bd: No such zone configured
+Use 'create' to begin configuring a new zone.
+
+zonecfg:db21-bd> create
+zonecfg:db21-bd> set zonepath=/zones/db26-bd-zone
+zonecfg:db21-bd> set autoboot=true
+zonecfg:db21-bd> set bootargs="-m verbose"
+
+zonecfg:db21-bd> add net
+zonecfg:db21-bd:net> set physical=ixgbe0
+zonecfg:db21-bd:net> set address=192.168.49.106/24
+zonecfg:db21-bd:net> end
+
+
+zonecfg:db21-bd> add net
+zonecfg:db21-bd:net> set physical=ixgbe5
+zonecfg:db21-bd:net> set address=10.49.49.106/24
+zonecfg:db21-bd:net> end
+
+
+zonecfg:db21-bd> add fs
+zonecfg:db21-bd:fs> set dir=/export/home
+zonecfg:db21-bd:fs> set special=/zones/db26-bd-home
+zonecfg:db21-bd:fs> set type=lofs
+zonecfg:db21-bd:fs> end
+
+
+zonecfg:db21-bd> add capped-memory
+zonecfg:db21-bd:capped-memory> set physical=16G
+zonecfg:db21-bd:capped-memory> end
+
+zonecfg:db21-bd> add dedicated-cpu
+zonecfg:db21-bd:capped-cpu> set ncpus=6
+zonecfg:db21-bd:capped-cpu> end
+
+zonecfg:db21-bd> info
+zonename: db26-bd
+zonepath: /zones/db26-bd-zone
+brand: native
+autoboot: true
+bootargs: -m verbose
+pool:
+limitpriv:
+scheduling-class:
+ip-type: shared
+hostid:
+inherit-pkg-dir:
+    	dir: /lib
+inherit-pkg-dir:
+    	dir: /platform
+inherit-pkg-dir:
+    	dir: /sbin
+inherit-pkg-dir:
+    	dir: /usr
+fs:
+    	dir: /export/home
+    	special: /zones/db26-bd-home
+    	raw not specified
+    	type: lofs
+    	options: []
+net:
+    	address: 192.168.49.106/24
+    	physical: ixgbe0
+    	defrouter not specified
+net:
+    	address: 10.49.49.106/24
+    	physical: ixgbe5
+    	defrouter not specified
+dedicated-cpu:
+    ncpus: 6
+capped-memory:
+    	physical: 15G
+
+zonecfg:db21-bd> verify
+zonecfg:db21-bd> commit
+zonecfg:db21-bd> exit
+
+Create a non global zone :
+bash-3.2# zoneadm -z db26-bd install
+
+Power on zone machine:
+bash-3.2# zoneadm -z db26-bd boot
+
+Now install Solaris in a newly created non global zone machine :
+Now login to a non-global zone console via global zone :  
+
+bash-3.2# zlogin -C db26-bd
+<Press Enter>
+
+What type of terminal are you using?
+ 1) ANSI Standard CRT
+ 2) DEC VT52
+ 3) DEC VT100
+ 4) Heathkit 19
+ 5) Lear Siegler ADM31
+ 6) PC Console
+ 7) Sun Command Tool
+ 8) Sun Workstation
+ 9) Televideo 910
+ 10) Televideo 925
+ 11) Wyse Model 50
+ 12) X Terminal Emulator (xterms)
+ 13) CDE Terminal Emulator (dtterm)
+ 14) Other
+Type the number of your choice and press Return: 12
+Creating new rsa public/private host key pair
+Creating new dsa public/private host key pair
+Configuring network interface addresses: ixgbe0 ixgbe5.
+
+─ Configure Multiple Network Interfaces ────────────────────────────────────────
+
+  Multiple network interfaces have been detected on this system.  Specify all
+  of the network interfaces you want to configure.
+
+  Note: You must choose at least one interface to configure.
+
+  	Network interfaces
+  	──────────────────
+  	[X] ixgbe0:2
+  	[X] ixgbe5:2
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+	F2_Continue	F6_Help
+
+Note : Use Esc + 2 to continue
+
+
+*** After installation, login as root, then enable ssh root login. Then start the
+post installation tasks from you own pc terminal.
+
+
+for i in masum shuvo adnan alok safwan shamrat adnanreza shaker chayan mostafa noman rajon nasim tanzim shams thops oracle tahseen mubin shawon hasan ratina arjuarafin ; do useradd -d /export/home/$i -m -k /etc/skel/ -s /usr/bin/bash $i; done
+
+
+
+## see how many non-global zone in dbgz server
+zoneadm list -iv
+
+to Uninstall zone:
+
+zone turn off / shutdown : 
+
+# zoneadm -z db22-bd halt
+
+zone list : 
+# zoneadm list -iv
+
+zone uninstall :
+# zoneadm -z db22-bd uninstall 
+
+zone delete : 
+# zonecfg -z db22-bd delete
+
+============================================================================================================
+To Reconfigure Anything:
+# /usr/sbin/zonecfg -z db25-bd
+zonecfg:db25-bd> select capped-memory [ use Tab to see the available contents ]
+select attr          	select capped-memory 	select dedicated-cpu 	select fs            	select net
+select capped-cpu    	select dataset       	select device        	select inherit-pkg-dir   select rctl
+
+# zonecfg:db25-bd:capped-memory> info
+capped-memory:
+    physical: 15G
+
+# zonecfg:db25-bd:capped-memory> set physical=32G
+# zonecfg:db25-bd:capped-memory> info
+capped-memory:
+    physical: 32G
+zonecfg:db25-bd:capped-memory> end
+# zonecfg:db25-bd> info
+zonename: db25-bd
+capped-memory:
+    physical: 32G
+
+# zonecfg:db25-bd> verify
+# zonecfg:db25-bd> commit
+# zonecfg:db25-bd> info
+#zonecfg:db25-bd> exit
+# zoneadm -z db25-bd boot
+
+============================================================================================================
+
+
+
+
+
+
+============================================================================================================
+To Administer Zones:
+# /usr/sbin/zoneadm list -iv
+13 db25-bd      	running	/zones/db25-bd-zone        	native   shared
+
+# /usr/sbin/zonecfg -z db01-sj info
+
+# To see the memory & SWAP of solaris os:
+prtconf | grep Memory
+
+swap -s
+
+Use the swap -l command to identify a system's swap areas. Activated swap devices or files are listed under the swapfile column
+Use the swap -s command to monitor swap resources.
+
+============================================================================================================
+
+https://docs.oracle.com/cd/E23824_01/html/821-1460/z.inst.task-23.html

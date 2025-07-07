@@ -1,0 +1,31 @@
+Solaris 11 
+
+
+root@solaris11:~# zonecfg -z sol11zone
+Use 'create' to begin configuring a new zone.
+zonecfg:sol11zone> create
+create: Using system default template 'SYSdefault'
+zonecfg:sol11zone> set zonepath=/zones/sol11zone
+zonecfg:sol11zone> set autoboot=true
+zonecfg:sol11zone> set bootargs="-m verbose"
+zonecfg:sol11zone> add dedicated-cpu
+zonecfg:sol11zone:dedicated-cpu> set ncpus=1
+zonecfg:sol11zone:dedicated-cpu> end
+zonecfg:sol11zone> add capped-memory
+zonecfg:sol11zone:capped-memory> set physical=1g
+zonecfg:sol11zone:capped-memory> end
+zonecfg:sol11zone> add fs
+zonecfg:sol11zone:fs> set dir=/usr/local
+zonecfg:sol11zone:fs> set special=/opt/local
+zonecfg:sol11zone:fs> set type=lofs
+zonecfg:sol11zone:fs> end
+zonecfg:sol11zone> set ip-type=shared
+zonecfg:sol11zone> add net
+zonecfg:sol11zone:net> set physical=net0
+zonecfg:sol11zone:net> set address=192.168.6.89
+zonecfg:sol11zone:net> set defrouter=192.168.1.1
+zonecfg:sol11zone:net> end
+zonecfg:sol11zone:net> remove anet
+zonecfg:sol11zone:net> verify
+zonecfg:sol11zone:net> commit
+zonecfg:sol11zone:net> exit
