@@ -1,0 +1,104 @@
+[root@ol7-01 ~]# yum install java
+[root@ol7-01 ~]# java -version
+openjdk version "1.8.0_402"
+OpenJDK Runtime Environment (build 1.8.0_402-b06)
+OpenJDK 64-Bit Server VM (build 25.402-b06, mixed mode)
+
+[root@ol7-01 ~]# wget https://dlcdn.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
+--2024-04-15 12:38:42--  https://dlcdn.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
+Resolving dlcdn.apache.org (dlcdn.apache.org)... 151.101.2.132, 2a04:4e42::644
+Connecting to dlcdn.apache.org (dlcdn.apache.org)|151.101.2.132|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 119028138 (114M) [application/x-gzip]
+Saving to: ‘kafka_2.13-3.7.0.tgz’
+
+100%[============================================================================================================================>] 119,028,138 5.84MB/s   in 17s    
+
+2024-04-15 12:38:59 (6.73 MB/s) - ‘kafka_2.13-3.7.0.tgz’ saved [119028138/119028138]
+
+[root@ol7-01 ~]# mv kafka_2.13-3.7.0.tgz /root/kafka_test/
+
+[root@ol7-01 ~]# cd kafka_test/
+
+[root@ol7-01 kafka_test]# tar -xzf kafka_2.13-3.7.0.tgz
+
+[root@ol7-01 kafka_test]# ls -la
+total 116256
+drwxr-xr-x. 3 root root      4096 Apr 15 12:40 .
+dr-xr-x---. 6 root root      4096 Apr 15 12:40 ..
+drwxr-xr-x. 7 root root      4096 Feb  9 19:34 kafka_2.13-3.7.0
+-rw-r--r--. 1 root root 119028138 Feb 26 20:20 kafka_2.13-3.7.0.tgz
+
+[root@ol7-01 kafka_2.13-3.7.0]# bin/zookeeper-server-start.sh config/zookeeper.properties
+[2024-04-15 12:43:40,682] INFO Reading configuration from: config/zookeeper.properties (org.apache.zookeeper.server.quorum.QuorumPeerConfig)
+[2024-04-15 12:43:40,683] WARN config/zookeeper.properties is relative. Prepend ./ to indicate that you're sure! (org.apache.zookeeper.server.quorum.QuorumPeerConfig)
+[2024-04-15 12:43:40,684] INFO clientPortAddress is 0.0.0.0:2181 (org.apache.zookeeper.server.quorum.QuorumPeerConfig)
+[2024-04-15 12:43:40,684] INFO secureClientPort is not set (org.apache.zookeeper.server.quorum.QuorumPeerConfig)
+[2024-04-15 12:43:40,684] INFO observerMasterPort is not set (org.apache.zookeeper.server.quorum.QuorumPeerConfig)
+[2024-04-15 12:43:40,684] INFO metricsProvider.className is org.apache.zookeeper.metrics.impl.DefaultMetricsProvider (org.apache.zookeeper.server.quorum.QuorumPeerConfig)
+
+[root@ol7-01 kafka_2.13-3.7.0]# bin/kafka-server-start.sh config/server.properties
+[2024-04-15 12:44:31,120] INFO Registered kafka:type=kafka.Log4jController MBean (kafka.utils.Log4jControllerRegistration$)
+[2024-04-15 12:44:31,293] INFO Setting -D jdk.tls.rejectClientInitiatedRenegotiation=true to disable client-initiated TLS renegotiation (org.apache.zookeeper.common.X509Util)
+
+[root@ol7-01 kafka_2.13-3.7.0]# bin/kafka-topics.sh --create --topic quickstart-events --bootstrap-server localhost:9092
+Created topic quickstart-events.
+[root@ol7-01 kafka_2.13-3.7.0]# bin/kafka-topics.sh --describe --topic quickstart-events --bootstrap-server localhost:9092
+Topic: quickstart-events	TopicId: JnQOQ_I0SIKIKR43g7g_Xg	PartitionCount: 1	ReplicationFactor: 1	Configs: 
+	Topic: quickstart-events	Partition: 0	Leader: 0	Replicas: 0	Isr: 0
+
+[root@ol7-01 kafka_2.13-3.7.0]# bin/kafka-console-producer.sh --topic quickstart-events --bootstrap-server localhost:9092
+>This is my first event
+>this is my second event
+>this is my third event
+
+[root@ol7-01 kafka_2.13-3.7.0]# bin/kafka-console-consumer.sh --topic quickstart-events --from-beginning --bootstrap-server localhost:9092
+This is my first event
+this is my second event
+this is my third event
+
+NOTE: If u use --delete from kafka-topics.sh 
+---> make sure there is no CONSUMER running 
+---> and you set 'delete.topic.enable:true' in server.properties file on all kafka brokers. 
+
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --delete --topic DummyTopic 
+
+
+
+====================
+
+Create topics:
+
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --replication-factor 3 --partitions 4 --topic topic-name
+
+List all topics:
+
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --list
+
+Add a topic partition:
+
+bin/kafka-topics.sh --bootstrap-server localhost:9092 --alter --topic <topic-name> --partitions 16
+
+Run a producer:
+
+bin/kafka-console-producer.sh --topic <topic-name> --broker-list localhost:9092
+
+Run a consumer:
+
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic <topic-name>
+
+Consume messages from the beginning:
+
+bin/kafka-console-consumer.sh --topic <topic-name> --bootstrap-server localhost:9092 --group <group-name>--from-beginning
+
+Get information on a specific consumer group:
+
+bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group <group-name>
+
+Delete a consumer group:
+
+/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --delete --group my-group --group <group-name>
+
+Reset the offset of a topic:
+
+bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --reset-offsets --group <group-name> --topic <topic-name> --to-earliest
