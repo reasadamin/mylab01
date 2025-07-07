@@ -1,0 +1,154 @@
+Import SSL Certificate :
+
+Backup necessary directories :
+
+# mkdir ssl-bak
+# cd ssl-bak/
+# cp -prv /etc/httpd/conf httpd-conf-bak
+# cp -p /etc/pki/spacewalk/jabberd/server.pem pki-jabber-server.pem
+# cp -prv /root/ssl-build ssl-build-bak
+# cp -prv /var/www/html/pub html-pub
+# ls
+
+Copy therapbd’s domain certificate “therapbd_net.pem” in “/root/ssl-build/prime01-bd/server.crt” :
+
+# cd /home/adnanreza/NameCheap/
+# ls
+# cp /home/adnanreza/NameCheap/star_therap_net.crt /root/ssl-build/prime01-se/server.crt
+
+Copy CA certificate bundle to “/root/ssl-build/RHN-ORG-TRUSTED-SSL-CERT” :
+
+# cp /home/adnanreza/NameCheap/star_therap_net.ca-bundle /root/ssl-build/RHN-ORG-TRUSTED-SSL-CERT
+
+Verify domain certificate against the CA public certificate :
+
+# openssl verify -CAfile /root/ssl-build/RHN-ORG-TRUSTED-SSL-CERT /root/ssl-build/prime01-se/server.crt
+
+Store the CA public certificate in spacewalk DB :
+
+# rhn-ssl-dbstore -v --ca-cert=/root/ssl-build/RHN-ORG-TRUSTED-SSL-CERT
+
+Generate web server SSL package :
+
+#  rhn-ssl-tool --gen-server --rpm-only --dir /root/ssl-build
+
+# # # Command output :
+
+# rhn-ssl-tool --gen-server --rpm-only --dir /root/ssl-build
+
+...working...
+
+Generating web server's SSL key pair/set RPM:
+    /root/ssl-build/prime01-se/rhn-org-httpd-ssl-key-pair-prime01-se-1.0-2.src.rpm
+    /root/ssl-build/prime01-se/rhn-org-httpd-ssl-key-pair-prime01-se-1.0-2.noarch.rpm
+
+The most current Spacewalk Proxy Server installation process against RHN hosted
+requires the upload of an SSL tar archive that contains the CA SSL public
+certificate and the web server's key set.
+
+Generating the web server's SSL key set and CA SSL public certificate archive:
+    /root/ssl-build/prime01-se/rhn-org-httpd-ssl-archive-prime01-se-1.0-2.tar
+
+Deploy the server's SSL key pair/set RPM:
+    (NOTE: the Red Hat Satellite or Proxy installers may do this step for you.)
+    The "noarch" RPM needs to be deployed to the machine working as a
+    web server, or Red Hat Satellite, or Spacewalk Proxy.
+    Presumably 'prime01-se.therap.net'.
+
+Install the SSL package :
+
+# rpm -Uhv /root/ssl-build/prime01-se/rhn-org-httpd-ssl-key-pair-prime01-se-1.0-2.noarch.rpm
+
+# # # Command output :
+
+# rpm -Uhv /root/ssl-build/prime01-se/rhn-org-httpd-ssl-key-pair-prime01-se-1.0-2.noarch.rpm
+Preparing...                ########################################### [100%]
+   1:rhn-org-httpd-ssl-key-p########################################### [100%]
+
+Generate public CA certificate package :
+
+# rhn-ssl-tool --gen-ca --dir=/root/ssl-build --rpm-only
+
+# # # Command output :
+
+# rhn-ssl-tool --gen-ca --dir=/root/ssl-build --rpm-only
+
+...working...
+Generating CA public certificate RPM:
+    /root/ssl-build/rhn-org-trusted-ssl-cert-1.0-2.src.rpm
+    /root/ssl-build/rhn-org-trusted-ssl-cert-1.0-2.noarch.rpm
+
+Make the public CA certficate publically available:
+    (NOTE: the Red Hat Satellite or Proxy installers may do this step for you.)
+    The "noarch" RPM and raw CA certificate can be made publically accessible
+    by copying it to the /var/www/html/pub directory of your Red Hat Satellite or
+    Proxy server.
+
+Install the generated the .rpm (If the spacewalk server is registered as a spacewalk client) :
+
+# rpm -Uvh /root/ssl-build/rhn-org-trusted-ssl-cert-1.0-2.noarch.rpm
+
+# # # Command output :
+
+# rpm -Uvh /root/ssl-build/rhn-org-trusted-ssl-cert-1.0-2.noarch.rpm
+Preparing...                ########################################### [100%]
+   1:rhn-org-trusted-ssl-cer########################################### [100%]
+update-ca-trust: Warning: The dynamic CA configuration feature is in the disabled state
+
+Copy the .rpm file to /var/www/html :
+
+# cp /root/ssl-build/rhn-org-trusted-ssl-cert-1.0-2.noarch.rpm /var/www/html/pub/
+
+Copy the CA cert to /var/www/html/pub :
+
+# cp /root/ssl-build/RHN-ORG-TRUSTED-SSL-CERT /var/www/html/pub
+
+Check sha1 checksum :
+
+# sha1sum /root/ssl-build/RHN-ORG-TRUSTED-SSL-CERT /usr/share/rhn/RHN-ORG-TRUSTED-SSL-CERT /var/www/html/pub/RHN-ORG-TRUSTED-SSL-CERT
+
+Stop spacewalk service :
+
+# spacewalk-service stop
+
+Clean files in “/var/lib/jabberd/db”, if any file exists there :
+
+# rm -Rf /var/lib/jabberd/db/*
+
+Backup the /etc/pki/tls directory :
+
+# cp -rv /etc/pki/tls /home/adnanreza/ssl-bak/pki-tls-bak
+
+Copy therapbd domain private key in /etc/pki/tls/private/spacewalk.key :
+
+# cp /home/adnanreza/NameCheap/star_therap_net.key /etc/pki/tls/private/spacewalk.key
+
+Backup /etc/pki/spacewalk/jabberd/server.pem :
+
+# cp /etc/pki/spacewalk/jabberd/server.pem /home/adnanreza/ssl-bak/pki-jabber-server.pem_2
+
+Append the contents of therapbd domain key in /etc/pki/spacewalk/jabberd/server.pem :
+
+# cd /home/adnanreza/NameCheap
+# cat /home/adnanreza/NameCheap/star_therap_net.crt > /etc/pki/spacewalk/jabberd/server.pem
+# cat /home/adnanreza/NameCheap/star_therap_net.key >> /etc/pki/spacewalk/jabberd/server.pem
+
+Note : Instead of last two commands we can use simply use vim /etc/pki/spacewalk/jabberd/server.pem should contain only therap certificate and key.
+
+Start spacewalk service :
+
+# spacewalk-service start
+
+Check /var/log/messages to troubleshoot :
+
+# tail -f /var/log/messages
+
+Mail sender address and SMTP relay host configuration :
+
+# vim /etc/rhn/rhn.conf
+
+#Settings for smtp relay host and sender address
+web.smtp_server=<mail_server_hostname>
+web.default_mail_from=sysops@therapservices.net
+
+# spacewalk-service restart
