@@ -19,4 +19,4 @@ ENV PATH="/root/.local/bin:$PATH"
 
 COPY . . 
 
-CMD ["python", "app.py"] 
+CMD ["python", "main.py"] 
