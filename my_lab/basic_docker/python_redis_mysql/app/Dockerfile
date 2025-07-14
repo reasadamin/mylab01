@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN pip install --update pip /
+RUN pip install --update pip \
     && pip install --user -r requirements.txt
 
 #Stage2: Runtime
