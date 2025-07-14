@@ -20,6 +20,9 @@ nginx:
   depends_on:
     - app 
 
+redis:
+  image: redis:alpine
+
 mysql:
   image: mysql:8.0
   environment:
@@ -27,8 +30,6 @@ mysql:
     MYSQL_DATABASE: testdb
   volumes:
     - mysql-data:/var/lib/mysql
-redis:
-  image: redis:alpine
 
 volumes:
   mysql-data:
