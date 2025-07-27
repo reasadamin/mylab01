@@ -1,30 +1,50 @@
 1. Create 3 pods names nginx1, nginx2, nginx3. All of them have the label app=v1
 
-kubectl run nginx1 --image=nginx --restart=Never --labels=app=v1
-kubectl run nginx2 --image=nginx --restart=Never --labels=app=v1
-kubectl run nginx3 --image=nginx --restart=Never --labels=app=v1
+# kubectl run nginx1 --image=nginx --restart=Never --labels=app=v1
+# kubectl run nginx2 --image=nginx --restart=Never --labels=app=v1
+# kubectl run nginx3 --image=nginx --restart=Never --labels=app=v1
 
 for i in {1..3}; do kubectl run nginx$i --image=nginx --restart=Never -l app=v1; done
 
 2. Show all lavels of the pods
-kubectl get po --show-labels
+# kubectl get po --show-labels
 
 3. Change the label of the pod nginx2 to be app=v2
-kubectl label pod nginx2 app=v2 --overwrite
+# kubectl label pod nginx2 app=v2 --overwrite
 
-or kubectl edit pod nginx2 
+or # kubectl edit pod nginx2 
 
 4. Get the label "App" for the pods (Show a column with App labels)
 
-kubectl get pod -L app
+# kubectl get pod -L app
 or 
-kubectl get pod --label-columns=app 
+# kubectl get pod --label-columns=app 
 
 5. Get only the 'app=v2' pods
 
-kubectl get pod -l app=v2
+# kubectl get pod -l app=v2
 
 6. Get 'app=v2' and not 'tier=frontend' pods
-kubectl get pod -l app=v2, tier!=frontend
+# kubectl get pod -l app=v2, tier!=frontend
 
-7. 
+7. We may need 2 kinds of labeling
+ - add an extra label to all the running pods
+ - add an annotation(extra information) to a group of running pods
+# k annotate pod -l "app=v2" owner=shamrat
+pod/app02 annotated
+
+# k annotate pod app02 --list
+owner=shamrat
+
+ - annotation by pod label, annotation by pod names
+
+ -- by label:
+# k label pod app01 app02 tier=web
+pod/app01 labeled
+pod/app02 labeled
+
+To remove labels:
+# k label pod app01 app02 tier-
+pod/app01 unlabeled
+pod/app02 unlabeled
+
