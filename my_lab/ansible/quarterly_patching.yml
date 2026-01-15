@@ -8,7 +8,7 @@
         tags: Patch
         shell: "yum -y update"
         register: patchlog
-      - debug: var=patchresult
+      - debug: var=patchlog
 
       - name: Reboot the server
         tags: reboot
