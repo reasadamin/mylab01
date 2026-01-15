@@ -1,0 +1,11 @@
+ansible --list-hosts ops [show the hosts listed in host file on that tag]
+
+ansible-playbook play.yml -K --step [run playbook step by step]
+
+--check [dry run]
+
+--syntax-check [systax check]
+
+ansible-playbook -f 30 my_playbook.yml [set the number of fork]
+
+ansible-playbook -i host_list_all -f 30 quarterly_patching.yml
