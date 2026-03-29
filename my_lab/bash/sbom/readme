@@ -1,0 +1,101 @@
+📦 SBOM Parser (Bash + jq):
+
+A simple Bash script to parse a JSON SBOM (Software Bill of Materials) and extract key security-relevant information.
+
+This script is useful in DevSecOps pipelines to quickly analyze components, licenses, and structure of a software build.
+
+🚀 Features:
+
+The script provides the following functionalities:
+
+📦 List all components (name + version)
+📊 Count total number of components
+📂 Display component types (OS, library, application, etc.)
+🏷️ Extract license information
+🛠️ Requirements
+
+Make sure the following tools are installed:
+
+bash
+jq (JSON parser)
+Install jq (if not installed)
+sudo apt install jq        # Ubuntu/Debian
+sudo dnf install jq        # RHEL/Fedora
+brew install jq            # macOS
+
+📄 Usage
+1. Make script executable
+chmod +x parse-sbom.sh
+2. Run the script
+./parse-sbom.sh sbom.json
+
+📂 Expected SBOM Format:
+The script assumes a JSON structure similar to Syft SBOM output:
+
+{
+  "artifacts": [
+    {
+      "name": "openssl",
+      "version": "1.1.1",
+      "type": "deb",
+      "licenses": [{"value": "OpenSSL"}]
+    }
+  ]
+}
+
+📊 Example Output:
+=== Component List ===
+openssl:1.1.1
+log4j:2.14.1
+bash:5.1
+flask:2.0.1
+
+=== Total Component Count ===
+4
+
+=== Component Types ===
+openssl:deb
+log4j:java-archive
+bash:deb
+flask:python
+
+=== Licenses ===
+openssl:OpenSSL
+log4j:Apache-2.0
+bash:GPL-3.0
+flask:BSD-3-Clause
+
+
+🧠 How It Works:
+
+The script uses jq to parse JSON and extract:
+
+.artifacts[].name
+.artifacts[].version
+.artifacts[].type
+.artifacts[].licenses[].value
+
+Each operation is implemented as a separate Bash function for modularity and clarity.
+
+🔐 DevSecOps Use Case:
+
+This script can be integrated into a CI/CD pipeline to:
+
+Gain visibility into dependencies
+Support vulnerability scanning workflows
+Validate license compliance
+Prepare data for policy enforcement
+
+⚠️ Notes:
+The script assumes .artifacts[] format (used by Syft)
+If your SBOM uses .components[], update jq queries accordingly
+
+📌 Future Improvements:
+Add vulnerability scan integration (Grype / Trivy)
+Add policy enforcement (fail build on risky packages)
+Export results to CSV or JSON
+Support multiple SBOM formats
+
+
+👨‍💻 Author:
+Prepared as part of DevSecOps learning and interview preparation.
