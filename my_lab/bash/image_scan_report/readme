@@ -1,0 +1,51 @@
+📦 SBOM & Vulnerability Scan Script
+
+This script generates:
+
+SBOM using Syft
+Vulnerability report using Trivy
+
+for a given container image.
+
+🛠 Requirements
+
+Make sure these are installed:
+
+syft
+trivy
+bash
+▶️ Usage
+
+Make script executable:
+
+chmod +x generate-reports.sh
+
+Run the script:
+
+./generate-reports.sh <image-name>
+
+Example:
+
+./generate-reports.sh ubuntu:22.04
+📂 Output
+
+The script creates:
+
+sbom.json → SBOM report
+trivy-report.json → vulnerability report
+🧠 What it does
+Takes an image name as input
+Generates SBOM using Syft
+Runs Trivy scan on the image
+Saves both results as JSON files
+⚠️ Notes
+Script will exit if:
+No image is provided
+Syft or Trivy is not installed
+🎯 Purpose
+
+Useful for:
+
+DevSecOps practice
+CI/CD pipeline integration
+Basic container security analysis
