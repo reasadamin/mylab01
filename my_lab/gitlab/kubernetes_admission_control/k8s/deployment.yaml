@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clean-signed-app
+  namespace: pep-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clean-signed-app
+  template:
+    metadata:
+      labels:
+        app: clean-signed-app
+    spec:
+      imagePullSecrets:
+        - name: gitlab-regcred
+      containers:
+        - name: clean-signed-app
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 80

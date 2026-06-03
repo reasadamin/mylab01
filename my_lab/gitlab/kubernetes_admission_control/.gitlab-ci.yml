@@ -1,0 +1,56 @@
+stages:
+  - build
+  - scan
+  - sbom
+  - sign
+  - deploy
+  - check
+
+before_script:
+  - chmod +x scripts/*.sh
+
+variables:
+  IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  LOCAL_OUTPUT_DIR: "/home/gitlab-runner/pics01-output/$CI_PROJECT_NAME/$CI_COMMIT_SHORT_SHA"
+
+build_image:
+  stage: build
+  tags:
+    - ubuntu24_shell
+  script:
+    - scripts/build-image.sh
+
+trivy_scan:
+  stage: scan
+  tags:
+    - ubuntu24_shell
+  script:
+    - scripts/trivy-scan.sh
+
+generate_sbom:
+  stage: sbom
+  tags:
+    - ubuntu24_shell
+  script:
+    - scripts/generate-sbom.sh
+
+cosign_sign:
+  stage: sign
+  tags:
+    - ubuntu24_shell
+  script:
+    - scripts/cosign-sign.sh
+
+deploy_to_kubernetes:
+  stage: deploy
+  tags:
+    - ubuntu24_shell
+  script:
+    - scripts/deploy-k8s.sh
+
+#check_app:
+#  stage: check
+#  tags:
+#    - ubuntu24_shell
+#  script:
+#    - scripts/check-app.sh
