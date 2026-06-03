@@ -1,0 +1,105 @@
+Overview:
+DevCloud Core is a Terraform-based Infrastructure as Code (IaC) project designed to provision the foundational Oracle Cloud Infrastructure (OCI) resources required for a database development environment. The project automates the creation of networking, security, and access management components, providing a consistent and repeatable deployment process.
+
+The infrastructure follows a modular Terraform design, making it easier to manage, maintain, and extend as requirements evolve. The deployed environment is intended to support database-related workloads while maintaining network segmentation and controlled access through OCI security features.
+
+Key Features:
+Automated OCI infrastructure deployment using Terraform
+Dedicated compartment for database development resources
+Virtual Cloud Network (VCN) deployment
+Multiple private subnets across different availability domains
+Service Gateway integration for private OCI service access
+Route table configuration for internal and external connectivity
+Network Security Group (NSG) creation and management
+IAM policy configuration for DBA team access
+Modular Terraform architecture for maintainability and scalability
+Infrastructure Components
+
+The project provisions the following core infrastructure components:
+
+Compartment:
+A dedicated OCI compartment is created to logically isolate and manage database development resources.
+
+Networking:
+Virtual Cloud Network (VCN)
+Private subnets
+Route tables
+Service Gateway
+Network Security Groups (NSGs)
+Security
+Network Security Groups for workload segmentation
+Controlled access policies through OCI IAM
+Private subnet architecture with no public IP assignment
+Identity and Access Management
+
+IAM policies are created to provide appropriate access permissions for database administration teams and related user groups.
+
+Terraform Modules
+
+The project is organized using reusable Terraform modules.
+
+Module	Description
+compartment	Creates OCI compartments
+vcn	Creates Virtual Cloud Networks
+subnet	Creates private subnets
+routeTable	Creates route tables and routing rules
+serviceGateway	Creates OCI Service Gateway
+natGateway	Supports NAT Gateway deployment
+nsgList	Creates Network Security Groups
+nsgRules	Defines NSG security rules
+groupPolicy	Creates IAM policies
+Deployment Workflow
+
+The typical deployment process consists of:
+
+Configure OCI credentials.
+Update Terraform variables.
+Initialize Terraform.
+Validate the configuration.
+Review the execution plan.
+Apply the infrastructure.
+
+Terraform Commands:
+terraform init
+terraform validate
+terraform plan
+terraform apply
+
+To remove deployed resources:
+
+terraform destroy
+Benefits of the Project
+
+This Terraform solution provides several operational advantages:
+
+Infrastructure consistency across environments
+Reduced manual configuration effort
+Faster provisioning of cloud resources
+Improved maintainability through modular design
+Version-controlled infrastructure changes
+Repeatable deployments for development and testing environments
+Security Considerations
+
+The project follows several infrastructure security practices:
+
+Private subnet deployment
+Network segmentation using NSGs
+Controlled access through OCI IAM policies
+Service Gateway usage for private OCI service communication
+Infrastructure managed through code and version control
+
+When using this project, sensitive information such as OCI credentials, API keys, and Terraform variable files should not be committed to source control.
+
+Recommended files to exclude from Git repositories include:
+
+.terraform/
+*.tfstate
+*.tfstate.backup
+terraform.tfvars
+*.pem
+Use Case
+
+This project serves as the foundational infrastructure layer for database development environments hosted in Oracle Cloud Infrastructure. It provides the networking, security, and access management components required before deploying application servers, databases, monitoring solutions, or other platform services.
+
+Author
+Reasad Amin Shamrat
