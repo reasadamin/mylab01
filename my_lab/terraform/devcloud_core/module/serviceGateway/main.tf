@@ -4,27 +4,15 @@ data "oci_core_services" "all_oci_services" {
     values = ["All .* Services In Oracle Services Network"]
     regex  = true
   }
-  count = 1
 }
 
-resource "oci_core_service_gateway" "vcn_svc_gw" {
+resource "oci_core_service_gateway" "this" {
   compartment_id = var.compartment_id
-  vcn_id = var.vcn_id
-  #route_table_id = var.route_table_id
-  display_name = "vcn_svc_gw"
+  vcn_id         = var.vcn_id
+  display_name   = var.display_name
+  freeform_tags  = var.freeform_tags
+
   services {
-    #service_id = "all-bom-services-in-oracle-services-network"
-    service_id = data.oci_core_services.all_oci_services[0].services.0.id
-     }
-
+    service_id = data.oci_core_services.all_oci_services.services[0].id
+  }
 }
-/*
-
-resource "oci_core_internet_gateway" "vcn_igw" {
-    compartment_id = var.compartment_id
-    vcn_id = var.vcn_id
-    enabled = "false"
-    display_name = "vcn_igw"
-    route_table_id = var.route_table_id
-}
-*/

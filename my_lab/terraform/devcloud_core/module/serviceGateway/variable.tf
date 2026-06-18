@@ -1,17 +1,21 @@
-//Value will come from module_main
 variable "compartment_id" {
-  description = "Compartment OCID"
-  type = string
+  description = "OCID of the compartment the Service Gateway is created in."
+  type        = string
 }
-//Value will come from module_main
+
 variable "vcn_id" {
-  description = "VCN OCID"
-  type = string
+  description = "OCID of the VCN the Service Gateway attaches to."
+  type        = string
 }
-/*
-//Value will come from module_main
-variable "route_table_id" {
-  description = "Route table OCID"
-  type = string
+
+variable "display_name" {
+  description = "Display name of the Service Gateway."
+  type        = string
+  default     = "vcn_svc_gw"
 }
-*/
+
+variable "freeform_tags" {
+  description = "Freeform tags applied to the Service Gateway."
+  type        = map(string)
+  default     = { Team = "DBA" }
+}
