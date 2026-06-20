@@ -1,0 +1,15 @@
+# Kubernetes / local artifacts
+*.db
+*.tar
+*.tgz
+kubeconfig
+*.kubeconfig
+.minikube/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
