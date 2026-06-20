@@ -1,85 +1,22 @@
-data "oci_core_network_security_groups" "existing_nsgs" {
-  compartment_id = var.compartment_id
-}
+resource "oci_core_network_security_group_security_rule" "this" {
+  for_each = var.nsg_rules
 
-locals {
-  nsg_tag_map = {
-    for nsg in data.oci_core_network_security_groups.existing_nsgs.network_security_groups :
-    nsg.display_name => nsg.id
+  network_security_group_id = var.nsg_ids[each.value.nsg_name]
+  description               = each.value.description
+  direction                 = each.value.direction
+  protocol                  = each.value.protocol
+  source                    = each.value.direction == "INGRESS" ? each.value.remote : null
+  source_type               = each.value.direction == "INGRESS" ? each.value.remote_type : null
+  destination               = each.value.direction == "EGRESS" ? each.value.remote : null
+  destination_type          = each.value.direction == "EGRESS" ? each.value.remote_type : null
+
+  dynamic "tcp_options" {
+    for_each = each.value.protocol == "6" && each.value.port != null ? [each.value.port] : []
+    content {
+      destination_port_range {
+        min = tcp_options.value.min
+        max = tcp_options.value.max
+      }
+    }
   }
-}
-
-resource "oci_core_network_security_group_security_rule" "oci_yum_nsg_rules" {
-    for_each = var.oci_yum_nsg
-    
-    network_security_group_id   = tostring(lookup(local.nsg_tag_map, each.key, null))
-    description                 = join(",", each.value.description)
-    direction                   = each.value.direction
-    protocol                    = each.value.protocol
-    destination                 = each.value.destination
-    destination_type            = each.value.destination_type
-    
-    tcp_options {
-      destination_port_range {
-        max                     = each.value.tcp_options.destination_port_range.max
-        min                     = each.value.tcp_options.destination_port_range.min
-      }
-    }
-
-}
-
-resource "oci_core_network_security_group_security_rule" "mail01_omd_nsg_rules" {
-    for_each = var.oci_mail_nsg
-    
-    network_security_group_id   = tostring(lookup(local.nsg_tag_map, each.key, null))
-    description                 = join(",", each.value.description)
-    direction                   = each.value.direction
-    protocol                    = each.value.protocol
-    destination                 = each.value.destination
-    destination_type            = each.value.destination_type
-
-    tcp_options {
-      destination_port_range {
-        max                     = each.value.tcp_options.destination_port_range.max
-        min                     = each.value.tcp_options.destination_port_range.min
-      }
-    }
-  
-}
-
-resource "oci_core_network_security_group_security_rule" "proxy_omd_nsg_rules" {
-    for_each = var.oci_proxy_nsg
-    
-    network_security_group_id   = tostring(lookup(local.nsg_tag_map, each.key, null))
-    description                 = join(",", each.value.description)
-    direction                   = each.value.direction
-    protocol                    = each.value.protocol
-    destination                 = each.value.destination
-    destination_type            = each.value.destination_type
-    
-    tcp_options {
-      destination_port_range {
-        max                     = each.value.tcp_options.destination_port_range.max
-        min                     = each.value.tcp_options.destination_port_range.min
-      }
-    } 
-  
-}
-
-resource "oci_core_network_security_group_security_rule" "mgmt_omd_nsg_rules" {
-    for_each = var.oci_mgmt_nsg
-    
-    network_security_group_id   = tostring(lookup(local.nsg_tag_map, each.key, null))
-    description                 = join(",", each.value.description)
-    direction                   = each.value.direction
-    protocol                    = each.value.protocol
-    destination                 = each.value.destination
-    destination_type            = each.value.destination_type
-     
-    tcp_options {
-      destination_port_range {
-        max                     = each.value.tcp_options.destination_port_range.max
-        min                     = each.value.tcp_options.destination_port_range.min
-      }
-    }
 }

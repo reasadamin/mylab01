@@ -1,105 +1,227 @@
-Overview:
-DevCloud Core is a Terraform-based Infrastructure as Code (IaC) project designed to provision the foundational Oracle Cloud Infrastructure (OCI) resources required for a database development environment. The project automates the creation of networking, security, and access management components, providing a consistent and repeatable deployment process.
+# DevCloud Core — OCI Terraform Foundation
 
-The infrastructure follows a modular Terraform design, making it easier to manage, maintain, and extend as requirements evolve. The deployed environment is intended to support database-related workloads while maintaining network segmentation and controlled access through OCI security features.
+DevCloud Core is a modular Terraform (Infrastructure as Code) project that provisions the
+foundational Oracle Cloud Infrastructure (OCI) resources for a database development
+environment: compartment, networking, gateways, network security groups, and IAM policy.
 
-Key Features:
-Automated OCI infrastructure deployment using Terraform
-Dedicated compartment for database development resources
-Virtual Cloud Network (VCN) deployment
-Multiple private subnets across different availability domains
-Service Gateway integration for private OCI service access
-Route table configuration for internal and external connectivity
-Network Security Group (NSG) creation and management
-IAM policy configuration for DBA team access
-Modular Terraform architecture for maintainability and scalability
-Infrastructure Components
+The design favours **private-by-default networking** — subnets have no public IPs, OCI
+service traffic egresses through a Service Gateway, on-prem/peered traffic routes through a
+DRG, and internet egress (if enabled) goes through a NAT gateway. It is intended as the base
+layer that application servers, databases, and platform services are deployed on top of.
 
-The project provisions the following core infrastructure components:
+---
 
-Compartment:
-A dedicated OCI compartment is created to logically isolate and manage database development resources.
+## Architecture
 
-Networking:
-Virtual Cloud Network (VCN)
-Private subnets
-Route tables
-Service Gateway
-Network Security Groups (NSGs)
-Security
-Network Security Groups for workload segmentation
-Controlled access policies through OCI IAM
-Private subnet architecture with no public IP assignment
-Identity and Access Management
 
-IAM policies are created to provide appropriate access permissions for database administration teams and related user groups.
+tenancy (root)
+└── compartment: database-dev
+    ├── VCN (10.242.8.0/21, internal DNS enabled)
+    │   ├── subnet dbdev-a  10.242.8.0/24   (private)
+    │   ├── subnet dbdev-b  10.242.9.0/24   (private)
+    │   └── subnet dbdev-c  10.242.10.0/24  (private)
+    ├── Route table
+    │   ├── OCI services      -> Service Gateway
+    │   ├── on-prem / peered  -> DRG
+    │   └── 0.0.0.0/0         -> NAT gateway   (optional)
+    ├── Service Gateway
+    ├── NAT gateway           (optional egress)
+    ├── Network Security Groups (+ rules)
+    └── IAM policy            (DBA group access)
 
-Terraform Modules
 
-The project is organized using reusable Terraform modules.
+Subnet CIDRs are **derived** from the VCN CIDR with `cidrsubnet()`, so changing the VCN
+range automatically re-carves the subnets.
 
-Module	Description
-compartment	Creates OCI compartments
-vcn	Creates Virtual Cloud Networks
-subnet	Creates private subnets
-routeTable	Creates route tables and routing rules
-serviceGateway	Creates OCI Service Gateway
-natGateway	Supports NAT Gateway deployment
-nsgList	Creates Network Security Groups
-nsgRules	Defines NSG security rules
-groupPolicy	Creates IAM policies
-Deployment Workflow
+---
 
-The typical deployment process consists of:
+## Modules
 
-Configure OCI credentials.
-Update Terraform variables.
-Initialize Terraform.
-Validate the configuration.
-Review the execution plan.
-Apply the infrastructure.
+| Module           | Purpose                                                        |
+| ---------------- | ------------------------------------------------------------- |
+| `compartment`    | Creates the `database-dev` compartment (`enable_delete` on).   |
+| `vcn`            | Creates the VCN with internal DNS.                            |
+| `subnet`         | Creates private subnets via `for_each` + `cidrsubnet()`.      |
+| `routeTable`     | Service Gateway, DRG, and optional NAT routes.               |
+| `serviceGateway` | Service Gateway for private OCI service access.              |
+| `natGateway`     | Optional NAT gateway for internet egress.                    |
+| `nsgList`        | Creates Network Security Groups via `for_each`.             |
+| `nsgRules`       | Creates NSG security rules from a single rule map.          |
+| `groupPolicy`    | IAM policy granting the DBA group access to the compartment. |
 
-Terraform Commands:
+---
+
+## Prerequisites
+
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.5.0
+- An OCI tenancy and a user with permission to create the resources above
+- The [OCI CLI](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm)
+  configured (`oci setup config`) — this project authenticates via the `~/.oci/config`
+  profile by default, so **no credentials live in the repo**.
+
+---
+
+## Repository layout
+
+
+devcloud_core/
+├── provider.tf              # provider config (auth via ~/.oci/config profile)
+├── versions.tf              # required_version + provider constraint
+├── backend.tf               # remote state template (commented)
+├── variable.tf              # root input variables
+├── main.tf                  # module wiring (dependency order)
+├── outputs.tf               # root outputs
+├── terraform.tfvars.example # copy -> terraform.tfvars (gitignored)
+├── .gitignore
+└── module/                  # reusable child modules
+
+
+---
+
+## Configuration
+
+1. Copy the example variables file and fill in your values (this file is gitignored):
+
+
+   cp terraform.tfvars.example terraform.tfvars
+   
+
+   | Variable         | Required | Description                                          |
+   | ---------------- | -------- | ---------------------------------------------------- |
+   | `tenancy_ocid`   | yes      | Tenancy OCID (root compartment).                     |
+   | `drg_ocid`       | yes      | DRG OCID for on-prem / peered routes.                |
+   | `dba_group_ocid` | yes      | IAM group OCID granted compartment access.           |
+   | `oci_profile`    | no       | `~/.oci/config` profile name. Default `DEFAULT`.     |
+   | `region`         | no       | OCI region. Default `ap-mumbai-1`.                   |
+
+   You can instead export these as environment variables:
+
+   
+   export TF_VAR_tenancy_ocid="ocid1.tenancy.oc1..xxxx"
+   export TF_VAR_drg_ocid="ocid1.drg.oc1.ap-mumbai-1.xxxx"
+   export TF_VAR_dba_group_ocid="ocid1.group.oc1..xxxx"
+   
+
+2. (Optional) Enable remote state — see [Remote state](#remote-state).
+
+---
+
+## Usage
+
+# Initialise providers/modules (and the backend, if configured)
 terraform init
+
+# Format all files recursively
+terraform fmt -recursive
+
+# Validate syntax and internal consistency
 terraform validate
-terraform plan
-terraform apply
 
-To remove deployed resources:
+# Preview changes; save the plan to a file
+terraform plan -out=tfplan
 
+# Apply the saved plan (no re-prompt)
+terraform apply tfplan
+
+# Tear everything down
 terraform destroy
-Benefits of the Project
 
-This Terraform solution provides several operational advantages:
+### Other useful commands
 
-Infrastructure consistency across environments
-Reduced manual configuration effort
-Faster provisioning of cloud resources
-Improved maintainability through modular design
-Version-controlled infrastructure changes
-Repeatable deployments for development and testing environments
-Security Considerations
+# Inspect outputs (all, one, or as JSON)
+terraform output
+terraform output subnet_ids
+terraform output -json
 
-The project follows several infrastructure security practices:
+# Target a single module during development
+terraform plan  -target=module.nsgRules
+terraform apply -target=module.nsgList
 
-Private subnet deployment
-Network segmentation using NSGs
-Controlled access through OCI IAM policies
-Service Gateway usage for private OCI service communication
-Infrastructure managed through code and version control
+# Refresh/inspect state
+terraform state list
+terraform state show 'module.vcn.oci_core_vcn.dbdev_vcn'
 
-When using this project, sensitive information such as OCI credentials, API keys, and Terraform variable files should not be committed to source control.
+# Upgrade providers within the version constraint, then lock for all platforms
+terraform init -upgrade
+terraform providers lock \
+  -platform=linux_amd64 -platform=darwin_arm64 -platform=windows_amd64
 
-Recommended files to exclude from Git repositories include:
+# Visualise the dependency graph
+terraform graph | dot -Tsvg > graph.svg
 
-.terraform/
-*.tfstate
-*.tfstate.backup
-terraform.tfvars
-*.pem
-Use Case
+> After the first `terraform init`, **commit `.terraform.lock.hcl`** — it pins exact
+> provider versions/checksums for reproducible builds.
 
-This project serves as the foundational infrastructure layer for database development environments hosted in Oracle Cloud Infrastructure. It provides the networking, security, and access management components required before deploying application servers, databases, monitoring solutions, or other platform services.
+---
 
-Author
+## Remote state
+
+State is local by default. For shared/durable state, use OCI Object Storage via the
+S3-compatible backend. Uncomment and fill in the block in `backend.tf`, then:
+
+# Create Customer Secret Keys under: Identity > your user > Customer Secret Keys
+terraform init \
+  -backend-config="access_key=$OCI_S3_ACCESS_KEY" \
+  -backend-config="secret_key=$OCI_S3_SECRET_KEY"
+
+
+Keep the secret key out of the repo (env var or a gitignored `*.auto.tfvars`).
+
+---
+
+## Outputs
+
+| Output                  | Description                              |
+| ----------------------- | ---------------------------------------- |
+| `compartment_id`        | OCID of the created compartment.         |
+| `vcn_id`                | OCID of the VCN.                         |
+| `subnet_ids`            | Map of subnet name => OCID.              |
+| `nsg_ids`               | Map of NSG name => OCID.                 |
+| `route_table_id`        | OCID of the route table.                 |
+| `service_gateway_id`    | OCID of the Service Gateway.             |
+| `nat_gateway_public_ip` | Public egress IP of the NAT gateway.     |
+
+---
+
+## Security notes
+
+- Authentication is via the `~/.oci/config` profile — no keys, OCIDs, or fingerprints in code.
+- `terraform.tfvars`, `*.pem`, `*.auto.tfvars`, and state files are gitignored.
+- Subnets are private (`prohibit_public_ip_on_vnic = true`).
+- OCI service access is via the Service Gateway; on-prem via the DRG.
+- IAM access is scoped to a single group on a single compartment.
+
+> Do **not** commit `terraform.tfvars`, key files, or state. If secrets were ever committed,
+> scrub them from git history (e.g. `git filter-repo`) and rotate the affected credentials.
+
+---
+
+## TODO / Roadmap
+
+**Hardening**
+- [ ] Scrub the previously committed `terraform.tfvars` from git history and rotate any exposed credentials.
+- [ ] Enable the remote state backend (create the Object Storage bucket + Customer Secret Keys, uncomment `backend.tf`).
+- [ ] Commit `.terraform.lock.hcl` and run `terraform providers lock` for all target platforms.
+- [ ] Add `variable validation` blocks (e.g. CIDR format, region allow-list).
+- [ ] Add a default-deny NSG baseline / explicit ingress rules where required.
+
+**CI / quality**
+- [ ] Add pre-commit hooks: `terraform fmt`, `terraform validate`, `tflint`.
+- [ ] Add static security scanning (`tfsec` / `checkov`) to CI.
+- [ ] Generate module docs with `terraform-docs`.
+
+**Cleanup**
+- [ ] Delete the empty `sampleModule01` scaffolding.
+- [ ] Decide internet-egress posture: keep `nat_gateway_id` wired, or set to `null` for a fully locked-down design.
+- [ ] Verify the `groupPolicy` attachment level against the compartment hierarchy.
+
+**Features**
+- [ ] Parameterise environment (dev/test/prod) via workspaces or `*.tfvars` per env.
+- [ ] Add security lists / flow logs for observability.
+- [ ] Promote `freeform_tags` to a shared defined-tag namespace.
+
+---
+
+## Author
+
 Reasad Amin Shamrat

@@ -1,14 +1,11 @@
-resource "oci_identity_policy" "dba_team_policy" {
+resource "oci_identity_policy" "this" {
   compartment_id = var.compartment_id
-  description = "DBA_compartment_policy"
-  name = "DBA_compartment_policy_01"
+  name           = var.policy_name
+  description    = var.policy_description
+  freeform_tags  = var.freeform_tags
 
-## Need to give the compartment name manually!!!!
-## Have to work on that
-
-statements = [
-    "allow group ${var.dba_group_ocid} to manage all-resources in compartment database-dev",
-    "allow group ${var.dba_group_ocid} to read virtual-network-family in compartment database-dev",
-]
-
+  statements = [
+    "allow group id ${var.dba_group_ocid} to manage all-resources in compartment ${var.compartment_name}",
+    "allow group id ${var.dba_group_ocid} to read virtual-network-family in compartment ${var.compartment_name}",
+  ]
 }

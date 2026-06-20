@@ -1,182 +1,75 @@
-variable "vcn_id" {
-  type = string
-}
-variable "compartment_id" {
-  type = string
+variable "nsg_ids" {
+  description = "Map of NSG display name => OCID. Wire this from the nsgList module's nsg_ids output."
+  type        = map(string)
 }
 
-variable "oci_yum_nsg" {
+variable "nsg_rules" {
+  description = <<-EOT
+    Map of rule key => security rule definition.
+      nsg_name    : must match a key in nsg_ids.
+      direction   : "INGRESS" or "EGRESS".
+      protocol    : "6" (TCP), "17" (UDP), "1" (ICMP), or "all".
+      remote      : CIDR, service label, or NSG OCID depending on remote_type.
+      remote_type : "CIDR_BLOCK", "SERVICE_CIDR_BLOCK", or "NETWORK_SECURITY_GROUP".
+      port        : optional TCP destination port range (only applied when protocol = "6").
+  EOT
   type = map(object({
-    description = list(string)
-    direction = optional(string)
-    protocol = optional(any)
-    destination = optional(string)
-    destination_type = optional(string)
-    tcp_options = object({
-      destination_port_range = object({
-        max = optional(any)
-        min = optional(any)
-      }) 
-    })
+    nsg_name    = string
+    description = optional(string, "")
+    direction   = string
+    protocol    = string
+    remote      = string
+    remote_type = string
+    port = optional(object({
+      min = number
+      max = number
+    }))
   }))
   default = {
-    "one" = { 
-      description = ["Test", " NSG", " Rule", " Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination  = "Service"
-      destination_type = "all-bom-services-in-oracle-services-network"
-      tcp_options = {
-        destination_port_range = {
-          max = 443
-          min = 443
-        }
-      }
+    "yum_https" = {
+      nsg_name    = "oci_yum_nsg"
+      description = "Allow HTTPS egress to OCI services via Service Gateway"
+      direction   = "EGRESS"
+      protocol    = "6"
+      remote      = "all-bom-services-in-oracle-services-network"
+      remote_type = "SERVICE_CIDR_BLOCK"
+      port        = { min = 443, max = 443 }
     }
-    "two" = { 
-      description = ["Test", "NSG", "Rule", "Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination = "Service"
-      destination_type = "all-bom-services-in-oracle-services-network"
-      tcp_options = {
-        destination_port_range = {
-          max = 80
-          min = 80
-        }
-      }
+    "yum_http" = {
+      nsg_name    = "oci_yum_nsg"
+      description = "Allow HTTP egress to OCI services via Service Gateway"
+      direction   = "EGRESS"
+      protocol    = "6"
+      remote      = "all-bom-services-in-oracle-services-network"
+      remote_type = "SERVICE_CIDR_BLOCK"
+      port        = { min = 80, max = 80 }
     }
-  }
-}
-
-variable "oci_mail_nsg" {
-  type = map(object({
-    description = list(string)
-    direction = string
-    protocol = number
-    destination = string
-    destination_type = string
-    tcp_options = object({
-      destination_port_range = object({
-        max = number
-        min = number
-      }) 
-    })
-  }))
-  default = {
-    "one" = {
-      description = ["Test", "NSG", "Rule", "Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination  = "192.168.10.50/24" 
-      destination_type = "CIDR_BLOCK"
-      tcp_options = {
-        destination_port_range = {
-          max = 443
-          min = 443
-        }
-      }
+    "mail_https" = {
+      nsg_name    = "mail01_omd_nsg"
+      description = "Allow HTTPS egress to mail network"
+      direction   = "EGRESS"
+      protocol    = "6"
+      remote      = "192.168.10.0/24"
+      remote_type = "CIDR_BLOCK"
+      port        = { min = 443, max = 443 }
     }
-    "two" = {
-      description = ["Test", "NSG", "Rule", "Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination = "192.168.10.50/24"
-      destination_type = "CIDR_BLOCK"
-      tcp_options = {
-        destination_port_range = {
-          max = 80
-          min = 80
-        }
-      }
+    "proxy_https" = {
+      nsg_name    = "proxy01_omd_nsg"
+      description = "Allow HTTPS egress to proxy network"
+      direction   = "EGRESS"
+      protocol    = "6"
+      remote      = "192.168.10.0/24"
+      remote_type = "CIDR_BLOCK"
+      port        = { min = 443, max = 443 }
     }
-  }
-}
-
-variable "oci_proxy_nsg" {
-  type = map(object({
-    description = list(string)
-    direction = string
-    protocol = number
-    destination = string
-    destination_type = string
-    tcp_options = object({
-      destination_port_range = object({
-        max = number
-        min = number
-      }) 
-    })
-  }))
-  default = {
-    "one" = {
-      description = ["Test", "NSG", "Rule", "Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination  = "CIDR_BLOCK"
-      destination_type = "192.168.10.50/24"
-      tcp_options = {
-        destination_port_range = {
-          max = 443
-          min = 443
-        }
-      }
-    }
-    "two" = {
-      description = ["Test", "NSG", "Rule", "Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination = "CIDR_BLOCK"
-      destination_type = "192.168.20.50/24"
-      tcp_options = {
-        destination_port_range = {
-          max = 80
-          min = 80
-        }
-      }
-    }
-  }
-}
-
-variable "oci_mgmt_nsg" {
-  type = map(object({
-    description = list(string)
-    direction = string
-    protocol = number
-    destination = string
-    destination_type = string
-    tcp_options = object({
-      destination_port_range = object({
-        max = number
-        min = number
-      }) 
-    })
-  }))
-  default = {
-    "one" = {
-      description = ["Test", "NSG", "Rule", "Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination  = "CIDR_BLOCK"
-      destination_type = "192.168.10.50/24"
-      tcp_options = {
-        destination_port_range = {
-          max = 443
-          min = 443
-        }
-      }
-    }
-    "two" = {
-      description = ["Test", "NSG", "Rule", "Attachment"]
-      direction = "EGRESS"
-      protocol = 6
-      destination = "CIDR_BLOCK"
-      destination_type = "192.168.20.50/24"
-      tcp_options = {
-        destination_port_range = {
-          max = 80
-          min = 80
-        }
-      }
+    "mgmt_https" = {
+      nsg_name    = "mgmt_omd_nsg"
+      description = "Allow HTTPS egress to management network"
+      direction   = "EGRESS"
+      protocol    = "6"
+      remote      = "192.168.20.0/24"
+      remote_type = "CIDR_BLOCK"
+      port        = { min = 443, max = 443 }
     }
   }
 }
