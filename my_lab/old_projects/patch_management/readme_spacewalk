@@ -2,11 +2,7 @@
 
 > Production runbooks, policy, and operational procedures for a centralized OS patch-management program — built and operated across a **HIPAA / ISO 27001 / SOC 2**-regulated healthcare SaaS estate.
 
-![Oracle Linux](https://img.shields.io/badge/Oracle_Linux-6%2F7-red)
-![Spacewalk](https://img.shields.io/badge/Oracle_Linux_Manager-Spacewalk_2.x-blue)
-![Tenable](https://img.shields.io/badge/Vuln_Mgmt-Tenable%2FNessus-00557f)
-![Compliance](https://img.shields.io/badge/Compliance-SOC_2%20·%20ISO_27001%20·%20HIPAA-success)
-![License](https://img.shields.io/badge/Docs-Reference-lightgrey)
+**Stack:** Oracle Linux 6/7 · Oracle Spacewalk (Linux Manager) · Tenable / Nessus · Yum / ULN
 
 ---
 
@@ -36,25 +32,29 @@ The intent is to show the *whole shape* of the work — not just running `yum up
 
 - **Centralized Linux patch management** with Oracle Spacewalk — channel design, ULN / public-yum repo syncing, activation keys, and emergency channels for out-of-cycle critical fixes.
 - **Risk-based vulnerability management** — translating Tenable VPR scores into severity tiers and remediation SLAs.
-- **Change-controlled promotion** — Dev → Pre-Prod → Production (secondary site → primary site) with sociability-testing gates.
+- **Change-controlled promotion** — Dev to Pre-Prod to Production (secondary site to primary site) with sociability-testing gates.
 - **Heterogeneous fleet operations** — documented procedures spanning Cisco, NetApp, FortiGate, Infoblox, F5, VMware, Oracle ZS3/firmware, and more.
 - **Compliance alignment** — process mapped to SOC 2, ISO 27001, and HIPAA expectations.
 - **Operational engineering** — certificate/SSL import, NFS-backed package stores, and real-world troubleshooting (e.g. jabberd database recovery).
 
 ## Centralized patching architecture
 
-```mermaid
-flowchart LR
-    ULN[Unbreakable Linux Network] --> SW
-    OYUM[Oracle Public Yum] --> SW
-    subgraph SW[Oracle Spacewalk / Linux Manager]
-        PC[Parent channels] --> CC[Child channels + errata]
-    end
-    CC -->|activation keys| DEV[Dev environment]
-    CC --> PPS[Pre-Prod / PPS]
-    CC --> P2[Production - secondary site]
-    CC --> P1[Production - primary site]
-    EMG[[Emergency channel]] -. critical out-of-cycle .-> P1
+```text
+  Unbreakable Linux Network  --+
+                               |
+  Oracle Public Yum  ----------+--> [ Oracle Spacewalk / Linux Manager ]
+                                         Parent channels
+                                            `--> Child channels + errata
+                                                        |
+                            activation keys             |
+                                  +---------------------+
+                                  |
+                                  +--> Dev environment
+                                  +--> Pre-Prod / PPS
+                                  +--> Production  (secondary site)
+                                  +--> Production  (primary site)
+
+  Emergency channel  ····· critical, out-of-cycle ·····> Production (primary)
 ```
 
 Repo syncing is **paused at the start of each cycle** so every environment is patched from an identical, frozen package set — guaranteeing version consistency from test through production.
@@ -65,9 +65,9 @@ Vulnerabilities are scored with Tenable's **VPR (Vulnerability Priority Rating)*
 
 | VPR score | Internal severity |
 |-----------|-------------------|
-| ≥ 9.0     | Critical          |
-| 8.0 – 8.9 | High              |
-| ≤ 7.9     | Medium / Low      |
+| >= 9.0    | Critical          |
+| 8.0 - 8.9 | High              |
+| <= 7.9    | Medium / Low      |
 
 ## Remediation SLA matrix
 
@@ -75,26 +75,46 @@ Time-to-patch (in days) by asset exposure and severity:
 
 | Severity | Internet-facing | App / DB / Interfacing | Other Prod | Dev / Office |
 |----------|:---:|:---:|:---:|:---:|
-| **Critical** (VPR ≥ 9) | 7 | 14 | 21 | 21 |
-| **High** (VPR 8–8.9)   | 14 | 21 | 28 | 30 |
-| **Medium / Low** (VPR ≤ 7.9) | Standard quarterly cycle | | | |
+| **Critical** (VPR >= 9) | 7 | 14 | 21 | 21 |
+| **High** (VPR 8-8.9)    | 14 | 21 | 28 | 30 |
+| **Medium / Low** (VPR <= 7.9) | Standard quarterly cycle | | | |
 
 The baseline cadence is a **quarterly cycle** aligned to Oracle's Critical Patch Updates (CPUs); critical and emergency fixes are pulled forward through a separate approval and deployment path.
 
 ## Patch lifecycle
 
-```mermaid
-flowchart TD
-    A[Quarterly cycle / CPU release] --> B[Tenable screening + VPR scoring]
-    B --> C{Severity?}
-    C -->|Critical / Emergency| D[Senior-mgmt risk assessment + approval]
-    C -->|Standard| E[Freeze repo sync]
-    D --> E
-    E --> F[Deploy to Dev — ~2 wks sociability testing]
-    F --> G[Deploy to Pre-Prod — ~2 wks validation]
-    G --> H[Production secondary site]
-    H --> I[Site cutover]
-    I --> J[Production primary site]
+```text
+   Quarterly cycle / CPU release
+              |
+              v
+   Tenable screening + VPR scoring
+              |
+       +------+-------------------+
+       |                          |
+  Critical / Emergency        Standard
+       |                          |
+       v                          |
+  Senior-mgmt risk               |
+  assessment + approval          |
+       |                          |
+       +------------+-------------+
+                    v
+            Freeze repo sync
+                    |
+                    v
+   Deploy to Dev        (~2 weeks sociability testing)
+                    |
+                    v
+   Deploy to Pre-Prod   (~2 weeks validation)
+                    |
+                    v
+   Production - secondary site
+                    |
+                    v
+            Site cutover
+                    |
+                    v
+   Production - primary site
 ```
 
 ## Documentation
