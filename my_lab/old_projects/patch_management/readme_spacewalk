@@ -1,0 +1,139 @@
+# Enterprise Patch & Vulnerability Management
+
+> Production runbooks, policy, and operational procedures for a centralized OS patch-management program — built and operated across a **HIPAA / ISO 27001 / SOC 2**-regulated healthcare SaaS estate.
+
+![Oracle Linux](https://img.shields.io/badge/Oracle_Linux-6%2F7-red)
+![Spacewalk](https://img.shields.io/badge/Oracle_Linux_Manager-Spacewalk_2.x-blue)
+![Tenable](https://img.shields.io/badge/Vuln_Mgmt-Tenable%2FNessus-00557f)
+![Compliance](https://img.shields.io/badge/Compliance-SOC_2%20·%20ISO_27001%20·%20HIPAA-success)
+![License](https://img.shields.io/badge/Docs-Reference-lightgrey)
+
+---
+
+## Contents
+
+- [Overview](#overview)
+- [What this demonstrates](#what-this-demonstrates)
+- [Centralized patching architecture](#centralized-patching-architecture)
+- [Risk-based prioritization](#risk-based-prioritization)
+- [Remediation SLA matrix](#remediation-sla-matrix)
+- [Patch lifecycle](#patch-lifecycle)
+- [Documentation](#documentation)
+- [Tooling](#tooling)
+- [Compliance mapping](#compliance-mapping)
+
+---
+
+## Overview
+
+This repository documents an end-to-end **patch and vulnerability management program** for a production fleet of Linux servers, network appliances, storage systems, and hypervisors supporting business-critical healthcare workloads.
+
+It pairs a **risk-based remediation policy** — severity tiers, SLAs, and approval gates — with the **hands-on runbooks** used to deliver it: centralized Linux patching through Oracle Spacewalk (Oracle Linux Manager), vulnerability prioritization via Tenable, and a multi-environment promotion pipeline that moves patches safely from development to production.
+
+The intent is to show the *whole shape* of the work — not just running `yum update`, but how patches are screened, prioritized, tested, scheduled, approved, and tied back to audit controls.
+
+## What this demonstrates
+
+- **Centralized Linux patch management** with Oracle Spacewalk — channel design, ULN / public-yum repo syncing, activation keys, and emergency channels for out-of-cycle critical fixes.
+- **Risk-based vulnerability management** — translating Tenable VPR scores into severity tiers and remediation SLAs.
+- **Change-controlled promotion** — Dev → Pre-Prod → Production (secondary site → primary site) with sociability-testing gates.
+- **Heterogeneous fleet operations** — documented procedures spanning Cisco, NetApp, FortiGate, Infoblox, F5, VMware, Oracle ZS3/firmware, and more.
+- **Compliance alignment** — process mapped to SOC 2, ISO 27001, and HIPAA expectations.
+- **Operational engineering** — certificate/SSL import, NFS-backed package stores, and real-world troubleshooting (e.g. jabberd database recovery).
+
+## Centralized patching architecture
+
+```mermaid
+flowchart LR
+    ULN[Unbreakable Linux Network] --> SW
+    OYUM[Oracle Public Yum] --> SW
+    subgraph SW[Oracle Spacewalk / Linux Manager]
+        PC[Parent channels] --> CC[Child channels + errata]
+    end
+    CC -->|activation keys| DEV[Dev environment]
+    CC --> PPS[Pre-Prod / PPS]
+    CC --> P2[Production - secondary site]
+    CC --> P1[Production - primary site]
+    EMG[[Emergency channel]] -. critical out-of-cycle .-> P1
+```
+
+Repo syncing is **paused at the start of each cycle** so every environment is patched from an identical, frozen package set — guaranteeing version consistency from test through production.
+
+## Risk-based prioritization
+
+Vulnerabilities are scored with Tenable's **VPR (Vulnerability Priority Rating)** and mapped to internal severity tiers:
+
+| VPR score | Internal severity |
+|-----------|-------------------|
+| ≥ 9.0     | Critical          |
+| 8.0 – 8.9 | High              |
+| ≤ 7.9     | Medium / Low      |
+
+## Remediation SLA matrix
+
+Time-to-patch (in days) by asset exposure and severity:
+
+| Severity | Internet-facing | App / DB / Interfacing | Other Prod | Dev / Office |
+|----------|:---:|:---:|:---:|:---:|
+| **Critical** (VPR ≥ 9) | 7 | 14 | 21 | 21 |
+| **High** (VPR 8–8.9)   | 14 | 21 | 28 | 30 |
+| **Medium / Low** (VPR ≤ 7.9) | Standard quarterly cycle | | | |
+
+The baseline cadence is a **quarterly cycle** aligned to Oracle's Critical Patch Updates (CPUs); critical and emergency fixes are pulled forward through a separate approval and deployment path.
+
+## Patch lifecycle
+
+```mermaid
+flowchart TD
+    A[Quarterly cycle / CPU release] --> B[Tenable screening + VPR scoring]
+    B --> C{Severity?}
+    C -->|Critical / Emergency| D[Senior-mgmt risk assessment + approval]
+    C -->|Standard| E[Freeze repo sync]
+    D --> E
+    E --> F[Deploy to Dev — ~2 wks sociability testing]
+    F --> G[Deploy to Pre-Prod — ~2 wks validation]
+    G --> H[Production secondary site]
+    H --> I[Site cutover]
+    I --> J[Production primary site]
+```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Patch Management Procedure](docs/patch-management-policy.md) | The governing policy: severity tiers, SLAs, approval gates, and centralized vs. non-centralized patching scope across the full fleet |
+| [Spacewalk Server Installation](docs/spacewalk-installation.md) | Building the Spacewalk server on Oracle Linux with an external Oracle database — Instant Client, repos, dependency fixes, and the `spacewalk-setup` walkthrough |
+| [Spacewalk Operations Runbook](docs/spacewalk-operations.md) | NFS-backed package store, jabberd database recovery, ULN credential setup, and the channel / repo / activation-key console workflows |
+| [SSL Certificate Import](docs/ssl-import.md) | Replacing the self-signed certificate with a CA-signed wildcard cert — key-pair and trusted-cert RPMs, jabberd cert, and SMTP relay config |
+| [Linux Patching with Yum & Errata](docs/linux-yum-patching.md) | Per-host workflow: listing security errata, filtering by severity and CVE, inspecting advisories, and applying targeted updates |
+
+## Tooling
+
+| Area | Tools |
+|------|-------|
+| OS / platform | Oracle Linux 6/7 (UEK), RHEL-family, Yum |
+| Patch management | Oracle Spacewalk (Oracle Linux Manager), ULN, Oracle Public Yum |
+| Vulnerability management | Tenable.io / Nessus (VPR-based prioritization) |
+| Supporting services | Apache httpd, jabberd, Cobbler, NFS, OpenSSL |
+| Fleet coverage | Cisco, NetApp, FortiGate, Infoblox, F5 LTM, VMware, Oracle ZS3, FreeNAS, WSUS |
+
+## Compliance mapping
+
+| Control area | How this program supports it |
+|--------------|------------------------------|
+| **SOC 2 (CC7.1 / CC8.1)** | Documented, repeatable change process with testing and approval gates |
+| **ISO 27001 (A.12.6.1)** | Timely remediation of technical vulnerabilities driven by VPR-based SLAs |
+| **HIPAA Security Rule** | Vulnerability scanning and risk-based patching protecting ePHI-bearing systems |
+
+---
+
+> **Note on sanitization:** internal hostnames, IP addresses, credentials, and account names from the original production environment have been replaced with generic placeholders. The procedures are intact; the environment-specific details are not real.
+
+---
+
+### Author
+
+**Reasad Amin** — Platform / Cloud Infrastructure Engineer
+CKA · OCI Certified Architect Associate · RHCE · CCNA · CISA
+
+[GitHub](https://github.com/reasadamin) · [LinkedIn](https://linkedin.com/in/reasadamin)

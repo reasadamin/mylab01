@@ -1,59 +1,63 @@
-Spacewalk Proxy Configuration :
+# Spacewalk Operations Runbook
+
+Operational procedures for an Oracle Spacewalk (Oracle Linux Manager) server: relocating the package store onto NFS, recovering the jabberd database after corruption, wiring up ULN credentials for repo sync, and the console workflow for channels, repositories, and activation keys.
+
+> Hostnames, IPs, and account paths below are generic placeholders.
+
+## Relocate the package store to an NFS volume
+
+Stop the service and stage the existing package directory off the mount point:
 
 
+spacewalk-service stop
+mv /var/satellite/redhat /home/opsadmin/
 
-After that reboot spacewalk service by invoking following command in terminal :
 
-# spacewalk-service restart
+Add the NFS volume to `/etc/fstab`:
 
-Add NFS Volume :
 
-# spacewalk-service stop
-  
-#  mv /var/satellite/redhat /home/adnanreza/
+# NFS volume for Spacewalk packages
+10.0.0.50:/export/swalk  /var/satellite  nfs  rw,bg,hard,nointr,rsize=65536,wsize=65536,tcp,nfsvers=3,timeo=600,actimeo=700,acregmin=3,lock,suid
 
-# vim /etc/fstab
 
-# nfs volume for Spacewalk packages
-192.168.97.65:/export/swalk 	/var/satellite 	nfs  	 rw,bg,hard,nointr,rsize=65536,wsize=65536,tcp,nfsvers=3,timeo=600,actimeo=700,acregmin=3,lock,suid
+Install the NFS client tools (set an http proxy first if one isn't configured in `/etc/yum.conf`):
 
-# rpm -qa | grep nfs
+rpm -qa | grep nfs
 
-# cd /etc/yum.repos.d/
+cd /etc/yum.repos.d/
+cp -p public-yum-ol6.repo.rpmsave public-yum-ol6.repo
 
-#  cp -p public-yum-ol6.repo.rpmsave public-yum-ol6.repo
+# Set a proxy only if not already defined in /etc/yum.conf
+export http_proxy=http://10.0.0.30:3128   # Site A
+# or
+export http_proxy=http://10.0.0.31:3128   # Site B
 
-# export http_proxy=http://192.168.102.30:3128 (For SE if proxy is not mentioned in /etc/yum.conf)
-			OR
-# export http_proxy=http://192.168.111.30:3128 (For FX if proxy is not mentioned in /etc/yum.conf)
+yum install nfs-utils
+rm -f public-yum-ol6.repo
 
-#  yum install nfs-utils
+Mount the volume and restore the package directory with the correct ownership:
 
-#  rm -f public-yum-ol6.repo
+service rpcbind start
+mount /var/satellite/
+df -h
 
-# service rpcbind start
+mv /home/opsadmin/redhat /var/satellite/
+ls -l /var/
 
-# mount /var/satellite/
+chown apache:root /var/satellite
+chown apache:root /var/satellite/redhat
 
-# df -h
+chkconfig rpcbind --list
+chkconfig rpcbind on
 
-# mv /home/adnanreza/redhat /var/satellite/
+spacewalk-service start
 
-# ls -l /var/
+## Recover a corrupted jabberd database
 
-# chown apache:root /var/satellite
+### Symptom
 
-# chown apache:root /var/satellite/redhat
+`osa-dispatcher` fails to start and the service start reports a jabberd error:
 
-# chkconfig rpcbind --list
-
-# chkconfig rpcbind on
-
-# spacewalk-service start
-
-Solution of problem regarding osa-disptacher :
-
-Scenario : 
 
 # spacewalk-service start
 Starting spacewalk services...
@@ -65,9 +69,8 @@ Starting s2s:                                              [  OK  ]
 Starting tomcat6:                                          [  OK  ]
 Waiting for tomcat to be ready ...
 Starting httpd:                                            [  OK  ]
-Starting osa-dispatcher: Spacewalk 3405 2018/03/15 03:32:34 -04:00: ('Not able to reconnect - See https://access.redhat.com/solutions/45332 for possible solutions.\n',)
-Spacewalk 3405 2018/03/15 03:32:34 -04:00: ('Error caught:',)
-
+Starting osa-dispatcher: ('Not able to reconnect - See https://access.redhat.com/solutions/45332 for possible solutions.\n',)
+('Error caught:',)
 ERROR: unhandled exception occurred: (can't write str to text stream).
                                                            [FAILED]
 Starting rhn-search...
@@ -75,102 +78,76 @@ Starting cobbler daemon:                                   [  OK  ]
 Starting RHN Taskomatic...
 Done.
 
-$ sudo grep 'corruption detected' /var/log/messages 
-Mar 15 03:32:20 prime01-ta jabberd/sm[3203]: db: corruption detected! close all jabberd processes and run db_recover
 
-Solution :
-
-# spacewalk-service stop
-
-Backup /etc/jabberd/sm.xml and change "<driver>db</driver>" to "<driver>sqlite</driver>" :
-
-# cp -p /etc/jabberd/sm.xml sm.xml.$(date +%F).bak
-# vim /etc/jabberd/sm.xml 
-# diff /etc/jabberd/sm.xml sm.xml.2018-03-15.bak 
-
-Backup /etc/jabberd/c2s.xml and change "<module>db</module>" to "<module>sqlite</module>":
-
-# pwd
-/home/<user_name>
-# cp -p /etc/jabberd/c2s.xml c2s.xml.$(date +%F).bak
-# vim /etc/jabberd/c2s.xml 
-# diff /etc/jabberd/c2s.xml c2s.xml.2018-03-15.bak 
-
-Create sqlite DB :
-
-# sqlite3 /var/lib/jabberd/db/sqlite.db < /usr/share/jabberd/db-setup.sqlite
-# chown jabber:jabber /var/lib/jabberd/db/sqlite.db 
+The root cause shows up in the system log:
 
 
-Start spacewalk and check services :
+$ sudo grep 'corruption detected' /var/log/messages
+... spacewalk01 jabberd/sm[3203]: db: corruption detected! close all jabberd processes and run db_recover
 
-# spacewalk-service start
-# spacewalk-service status
+### Fix — switch jabberd from Berkeley DB to SQLite
 
-Reference : 
+Stop the service:
 
-https://docs.oracle.com/cd/E92593_01/E85212/html/swk26-jabberd.html
+spacewalk-service stop
 
-Add ULN login info to sync ULN repos :
+Back up `sm.xml` and change `<driver>db</driver>` to `<driver>sqlite</driver>`:
 
-# ls -l /etc/rhn/spacewalk-repo-sync/uln.conf
--r-------- 1 root root 65 Jun  1 06:28 /etc/rhn/spacewalk-repo-sync/uln.conf
+cp -p /etc/jabberd/sm.xml sm.xml.$(date +%F).bak
+vim /etc/jabberd/sm.xml
+diff /etc/jabberd/sm.xml sm.xml.$(date +%F).bak
 
-Add write access to this file :
-# chmod 600 /etc/rhn/spacewalk-repo-sync/uln.conf
-
-Add username and password of ULN login :
-#  vim /etc/rhn/spacewalk-repo-sync/uln.conf
-[main] 
-username=ULN_SSO_username 
-password=ULN_SSO_password
+Back up `c2s.xml` and change `<module>db</module>` to `<module>sqlite</module>`:
 
 
-Remove write access to this file :
-# chmod 400 /etc/rhn/spacewalk-repo-sync/uln.conf
-
-Create a parent channel :
-Channels -> Manage Software Channels -> Create Channel
+cp -p /etc/jabberd/c2s.xml c2s.xml.$(date +%F).bak
+vim /etc/jabberd/c2s.xml
+diff /etc/jabberd/c2s.xml c2s.xml.$(date +%F).bak
 
 
+Create the SQLite database and set ownership:
+
+sqlite3 /var/lib/jabberd/db/sqlite.db < /usr/share/jabberd/db-setup.sqlite
+chown jabber:jabber /var/lib/jabberd/db/sqlite.db
 
 
-Create a Child Channel :
-Channels -> Manage Software Channels -> Create Channel
+Start and verify:
 
 
+spacewalk-service start
+spacewalk-service status
 
 
+> **Reference:** <https://docs.oracle.com/cd/E92593_01/E85212/html/swk26-jabberd.html>
+
+## Add ULN credentials for repo sync
+
+Check the config file (it should be root-readable only):
 
 
+ls -l /etc/rhn/spacewalk-repo-sync/uln.conf
+# -r-------- 1 root root ... /etc/rhn/spacewalk-repo-sync/uln.conf
 
 
+Temporarily grant write access, add the ULN single sign-on credentials, then revoke write access:
 
+chmod 600 /etc/rhn/spacewalk-repo-sync/uln.conf
+vim /etc/rhn/spacewalk-repo-sync/uln.conf
 
+[main]
+username=<ULN_SSO_username>
+password=<ULN_SSO_password>
 
+chmod 400 /etc/rhn/spacewalk-repo-sync/uln.conf
 
+## Console workflows
 
-
-
-
-
-
-Create a repo with ULN repo url : 
-Channels -> Manage Software Channels -> Manage Repositories -> Create Repository
-
-
-Create a repo with public yum repo url :
-Channels -> Manage Software Channels -> Manage Repositories -> Create Repository
-
- 
-Point a repo from a channel :
-Channels -> Manage Software Channels -> Select a channel -> Repositories -> Select a repo -> Update Repositories 
-
-
-Sync a repo :
-Channels -> Manage Software Channels -> Select a channel -> Repositories -> Sync -> Sync Now
-
-Create a key :
-Systems -> Activation Keys -> Create Key
-
- 
+| Task | Navigation |
+|------|------------|
+| Create a parent channel | Channels → Manage Software Channels → Create Channel |
+| Create a child channel | Channels → Manage Software Channels → Create Channel |
+| Create a repo (ULN repo URL) | Channels → Manage Software Channels → Manage Repositories → Create Repository |
+| Create a repo (public yum URL) | Channels → Manage Software Channels → Manage Repositories → Create Repository |
+| Point a repo to a channel | Channels → Manage Software Channels → *(select channel)* → Repositories → *(select repo)* → Update Repositories |
+| Sync a repo | Channels → Manage Software Channels → *(select channel)* → Repositories → Sync → Sync Now |
+| Create an activation key | Systems → Activation Keys → Create Key |
