@@ -1,22 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: clean-signed-app
+  name: ai-embedding-app
   namespace: pep-test
+  labels:
+    app: ai-embedding-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: clean-signed-app
+      app: ai-embedding-app
   template:
     metadata:
       labels:
-        app: clean-signed-app
+        app: ai-embedding-app
     spec:
       imagePullSecrets:
         - name: gitlab-regcred
+      # Image already runs as UID 10001; this just asserts it to the cluster so
+      # the Pod satisfies a runAsNonRoot check at admission.
+      securityContext:
+        runAsNonRoot: true
       containers:
-        - name: clean-signed-app
+        - name: ai-embedding-app
+          # Replaced with the signed image digest by deploy-k8s.sh at deploy time.
           image: IMAGE_PLACEHOLDER
           ports:
-            - containerPort: 80
+            - containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+          # /health is cheap and does not touch the model.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          # Modest limits sized for the small CPU model; bump if you see OOMKills.
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"

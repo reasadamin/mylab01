@@ -1,0 +1,15 @@
+# Top-level application dependencies, pinned for reproducible builds.
+# Versions verified current against PyPI; bump deliberately, not by accident.
+#
+# For a fully reproducible build, generate a complete lock from these:
+#   pip install -r requirements.txt && pip freeze > requirements.lock
+# then build from requirements.lock instead.
+#
+# NOTE: torch is pulled in transitively by sentence-transformers. The Dockerfile
+# installs the CPU-only torch wheel first (from the PyTorch CPU index) so the
+# image stays ~1 GB instead of dragging in the multi-GB CUDA build.
+
+fastapi==0.138.0
+uvicorn[standard]==0.49.0
+pydantic==2.13.4
+sentence-transformers==5.6.0

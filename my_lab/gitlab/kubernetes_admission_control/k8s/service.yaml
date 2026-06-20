@@ -8,6 +8,6 @@ spec:
   selector:
     app: clean-signed-app
   ports:
-    - port: 80
-      targetPort: 80
-      nodePort: 30221
+    - port: 80          # service port (unchanged)
+      targetPort: 8080  # container now listens on 8080
+      nodePort: 30221   # external NodePort (unchanged)

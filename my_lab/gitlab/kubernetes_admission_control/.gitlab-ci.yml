@@ -48,9 +48,9 @@ deploy_to_kubernetes:
   script:
     - scripts/deploy-k8s.sh
 
-#check_app:
-#  stage: check
-#  tags:
-#    - ubuntu24_shell
-#  script:
-#    - scripts/check-app.sh
+check_app:
+  stage: check
+  tags:
+    - ubuntu24_shell
+  script:
+    - scripts/check-app.sh

@@ -1,0 +1,49 @@
+# .gitignore — supply-chain demo
+#
+# Trust root for the commit stage: nothing sensitive or generated should ever
+# enter version control. Pipeline artifacts are produced on the runner under
+# $LOCAL_OUTPUT_DIR and are not meant to be tracked.
+
+# --- Signing key material (NEVER commit private keys) ---
+cosign.key
+*.key
+*.pem
+# cosign.pub is a PUBLIC key and is safe to commit if you choose to.
+
+# --- Cluster / cloud credentials ---
+kubeconfig
+*.kubeconfig
+.kube/
+*.pfx
+*.p12
+
+# --- Secrets and environment files ---
+.env
+.env.*
+*.env
+secrets.*
+*.secret
+
+# --- Pipeline outputs (generated on the runner) ---
+output/
+pics01-output/
+trivy/
+sbom/
+cosign/
+trivy-report*.txt
+image-digest.txt
+
+# --- SBOM / attestation artifacts ---
+*.spdx.json
+*.cdx.json
+*.att.json
+*.intoto.jsonl
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

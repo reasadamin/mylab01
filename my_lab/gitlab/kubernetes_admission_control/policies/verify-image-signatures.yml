@@ -1,0 +1,40 @@
+# Kyverno ClusterPolicy: block any Pod image in the pep-test namespace that
+# isn't signed by our Cosign key. This is the admission gate for the pipeline.
+#
+# Prereqs: Kyverno installed; cosign.pub matching the CI signing key.
+# Apply:   kubectl apply -f policies/verify-image-signatures.yaml
+#
+# Fill in two things below: your GitLab image path, and your cosign.pub.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-signatures
+spec:
+  validationFailureAction: Enforce   # block unsigned images (use Audit to only log)
+  background: false
+  webhookTimeoutSeconds: 30
+  failurePolicy: Fail                 # fail closed if the webhook errors
+  rules:
+    - name: verify-cosign-signature
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - pep-test
+      verifyImages:
+        # 1) Replace <group>/<project> with your GitLab path ($CI_REGISTRY_IMAGE).
+        - imageReferences:
+            - "registry.gitlab.com/<group>/<project>*"
+          mutateDigest: true
+          required: true
+          attestors:
+            - count: 1
+              entries:
+                # 2) Paste your cosign.pub between the markers.
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      REPLACE_WITH_YOUR_COSIGN_PUBLIC_KEY
+                      -----END PUBLIC KEY-----
