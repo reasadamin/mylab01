@@ -1,0 +1,142 @@
+# =============================================================================
+# Zero Trust runtime rules - ai-embedding-app
+# =============================================================================
+# These rules implement the runtime / Continuous Diagnostics & Mitigation (CDM)
+# leg of the Zero Trust architecture (NIST SP 800-207). The supply-chain and
+# admission stages (Trivy / Syft / Cosign / Kyverno) establish trust in the
+# artifact *before* it runs; these rules continuously verify the workload's
+# *behaviour* against a known-good baseline once it is running.
+#
+# The baseline is unusually tight by design: the image is built fully offline
+# (model baked in, HF_HUB_OFFLINE=1), runs as non-root UID 10001, and serves a
+# single FastAPI/uvicorn process. So "normal" is very narrow, which makes any
+# deviation a high-confidence signal.
+#
+# They reference macros/lists from Falco's default ruleset (spawned_process,
+# container, shell_binaries, outbound, open_write, open_read), which the Helm
+# chart loads alongside these.
+# =============================================================================
+
+# ---- Scope: what counts as "our workload" -----------------------------------
+# container.name comes from the Kubernetes container label via the container
+# runtime, so this works without the k8smeta plugin. Broaden to image.repository
+# or a namespace match if you prefer.
+- macro: embedding_app
+  condition: (container and container.name = "ai-embedding-app")
+
+# The ONLY processes this workload is ever expected to run. Tune this list once
+# against what you actually observe at startup (uvicorn may appear as python3.x).
+- list: embedding_app_allowed_procs
+  items: [uvicorn, python, python3, "python3.12"]
+
+# -----------------------------------------------------------------------------
+# 1) Process allow-list  (the strongest ZT rule)
+#    Identity/signing is not enough - behaviour must match the baseline too.
+# -----------------------------------------------------------------------------
+- rule: ZT Embedding App Unexpected Process
+  desc: >
+    The embedding service is an immutable, single-purpose workload that should
+    only ever run uvicorn/python. Any other binary indicates exec-based
+    compromise, lateral movement, or a dropped payload.
+  condition: >
+    spawned_process and embedding_app
+    and not proc.name in (embedding_app_allowed_procs)
+    and not proc.name in (shell_binaries)
+  output: >
+    ZT violation: unexpected process in embedding-app
+    (proc=%proc.name cmdline=%proc.cmdline parent=%proc.pname user=%user.name
+     uid=%user.uid container=%container.name image=%container.image.repository)
+  priority: CRITICAL
+  tags: [zero_trust, cdm, process, container, mitre_execution, T1059]
+
+# -----------------------------------------------------------------------------
+# 2) Shell in container  (dedicated signal for the classic post-exploitation step)
+# -----------------------------------------------------------------------------
+- rule: ZT Embedding App Shell Spawned
+  desc: >
+    A shell should never run inside the embedding workload. Shell execution is a
+    classic post-exploitation / interactive-access step.
+  condition: >
+    spawned_process and embedding_app and proc.name in (shell_binaries)
+  output: >
+    ZT violation: shell spawned in embedding-app
+    (shell=%proc.name cmdline=%proc.cmdline parent=%proc.pname user=%user.name
+     container=%container.name)
+  priority: CRITICAL
+  tags: [zero_trust, cdm, shell, container, mitre_execution, T1059]
+
+# -----------------------------------------------------------------------------
+# 3) Outbound network  (workload is offline by construction - any egress is anomalous)
+# -----------------------------------------------------------------------------
+- rule: ZT Embedding App Outbound Connection
+  desc: >
+    The container is built to need no network (model baked in, *_OFFLINE=1), so
+    it should make zero outbound connections. Egress suggests data exfiltration
+    or command-and-control. This is the showcase rule: the known-good baseline
+    is literally "no network".
+  condition: >
+    outbound and embedding_app
+  output: >
+    ZT violation: unexpected outbound connection from embedding-app
+    (connection=%fd.name proc=%proc.name cmdline=%proc.cmdline
+     container=%container.name image=%container.image.repository)
+  priority: CRITICAL
+  tags: [zero_trust, cdm, network, exfiltration, mitre_exfiltration, T1041]
+
+# -----------------------------------------------------------------------------
+# 4) Write outside /tmp  (runtime integrity / read-only-rootfs baseline)
+#    Becomes a hard guarantee once readOnlyRootFilesystem: true is set on the Pod.
+# -----------------------------------------------------------------------------
+- rule: ZT Embedding App Write Outside Tmp
+  desc: >
+    The workload is designed for a read-only root filesystem with /tmp as the
+    only writable path. A write anywhere else violates the immutability baseline
+    and may indicate tampering or a payload drop.
+  condition: >
+    open_write and embedding_app
+    and not fd.name startswith /tmp
+    and not fd.name startswith /proc
+    and not fd.name startswith /dev
+  output: >
+    ZT violation: write outside /tmp in embedding-app
+    (file=%fd.name proc=%proc.name cmdline=%proc.cmdline container=%container.name)
+  priority: ERROR
+  tags: [zero_trust, cdm, filesystem, integrity, mitre_defense_evasion, T1565]
+
+# -----------------------------------------------------------------------------
+# 5) Sensitive file access  (credential theft / token access)
+#    Tip: also set automountServiceAccountToken: false on the Pod so the token
+#    isn't even present - then any read here is unambiguously hostile.
+# -----------------------------------------------------------------------------
+- rule: ZT Embedding App Sensitive File Access
+  desc: >
+    The embedding service never needs host credential files or the Kubernetes
+    service-account token. Access indicates credential-theft attempts.
+  condition: >
+    open_read and embedding_app
+    and (fd.name in (/etc/shadow, /etc/sudoers)
+         or fd.name startswith /etc/sudoers.d
+         or fd.name startswith /root/
+         or fd.name startswith /var/run/secrets/kubernetes.io/serviceaccount)
+  output: >
+    ZT violation: sensitive file access in embedding-app
+    (file=%fd.name proc=%proc.name user=%user.name container=%container.name)
+  priority: CRITICAL
+  tags: [zero_trust, cdm, filesystem, credentials, mitre_credential_access, T1552]
+
+# -----------------------------------------------------------------------------
+# 6) Privilege escalation  (runs as non-root UID 10001, no-priv-escalation)
+# -----------------------------------------------------------------------------
+- rule: ZT Embedding App Privilege Escalation
+  desc: >
+    The container runs as non-root UID 10001 with allowPrivilegeEscalation=false.
+    A process running as root (uid 0) or a setuid call indicates an escalation
+    attempt that the runtime baseline forbids.
+  condition: >
+    embedding_app and ((spawned_process and user.uid = 0) or evt.type = setuid)
+  output: >
+    ZT violation: privilege escalation in embedding-app
+    (proc=%proc.name uid=%user.uid user=%user.name evt=%evt.type
+     container=%container.name)
+  priority: CRITICAL
+  tags: [zero_trust, cdm, privilege_escalation, mitre_privilege_escalation, T1548]

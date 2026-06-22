@@ -1,0 +1,54 @@
+# =============================================================================
+# Falco Helm values - Zero Trust runtime monitoring on Minikube
+# =============================================================================
+# Custom ZT rules are injected at install time by deploy-falco.sh
+# (--set-file customRules...). To make this file fully self-contained instead,
+# uncomment the customRules block at the bottom and paste the rules in.
+# =============================================================================
+
+# eBPF driver that needs no kernel headers on modern kernels (>= 5.8 with BTF).
+# Fallbacks if pods crashloop on your kernel: "ebpf" (legacy) or "auto".
+driver:
+  kind: modern_ebpf
+
+# Match these to your Minikube container runtime
+# (check: `minikube ssh -- 'crictl info | head'` or `docker info`).
+collectors:
+  enabled: true
+  docker:
+    enabled: true
+  containerd:
+    enabled: true
+    socket: /run/containerd/containerd.sock
+
+falco:
+  # JSON makes alerts easy to ship to Loki/Grafana/SIEM later.
+  json_output: true
+  json_include_output_property: true
+  buffered_outputs: false
+  priority: notice            # emit NOTICE and above
+  stdout_output:
+    enabled: true             # also visible via `kubectl logs`
+
+  # Be loud (not silent) if the kernel drops events under load.
+  syscall_event_drops:
+    actions:
+      - log
+      - alert
+    rate: 0.03333
+    max_burst: 10
+
+# Falcosidekick fans alerts out to sinks and ships a web UI - great for a
+# thesis demo / screenshots. Disable webui to keep the footprint small, or wire
+# `config.loki.hostport` to push into your existing Grafana/Loki stack.
+falcosidekick:
+  enabled: true
+  webui:
+    enabled: true
+  config:
+    debug: false
+
+# --- Self-contained alternative to --set-file -------------------------------
+# customRules:
+#   zt-embedding-app-rules.yaml: |-
+#     <paste the full contents of rules/zt-embedding-app-rules.yaml here>

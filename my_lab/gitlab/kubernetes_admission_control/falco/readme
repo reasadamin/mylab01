@@ -1,0 +1,76 @@
+# Falco — Zero Trust Runtime Monitoring (CDM layer)
+
+Runtime / Continuous Diagnostics & Mitigation layer for the
+`kubernetes_admission_control` project. Deployed **separately** from the app's
+CI/CD pipeline, because runtime monitoring is a node-level platform capability
+(a DaemonSet on every node), installed once — just like the Kyverno admission
+policy.
+
+## Where this fits in Zero Trust (NIST SP 800-207)
+
+| ZT concern | Mechanism | Stage |
+|---|---|---|
+| Trust in the artifact (provenance, integrity, SBOM) | Trivy · Syft · Cosign | build / supply chain |
+| Policy decision + enforcement at admission (PEP, fail-closed) | Kyverno | admission |
+| **Continuous verification of behaviour after admission (CDM)** | **Falco (this package)** | **runtime** |
+
+Admission control decides **once, at the door**. Falco is what keeps
+re-evaluating the workload **after** the door — turning a point-in-time check
+into the *continuous* verification that defines Zero Trust. Without it, the
+architecture trusts a Pod indefinitely once admitted.
+
+## Why these specific rules
+
+The workload has a deliberately tiny known-good baseline, which makes deviations
+high-confidence signals:
+
+- built fully offline (model baked in, `HF_HUB_OFFLINE=1`) → **any** outbound
+  connection is anomalous
+- single FastAPI/uvicorn process → **any** other binary or shell is anomalous
+- non-root UID 10001, no privilege escalation → uid 0 / setuid is anomalous
+- intended read-only rootfs with `/tmp` writable → writes elsewhere are anomalous
+
+See `rules/zt-embedding-app-rules.yaml`. Each rule maps to a ZT principle and a
+MITRE ATT&CK technique.
+
+## Deploy
+
+```bash
+./deploy-falco.sh        # helm install Falco + inject the ZT rules
+```
+
+Tail events and prove detection:
+
+```bash
+kubectl logs -n falco -l app.kubernetes.io/name=falco -c falco -f   # terminal 1
+./test/trigger-zt-alerts.sh                                          # terminal 2
+```
+
+Each test step should produce a matching `ZT violation` alert. Falcosidekick
+ships a web UI for screenshots (`admin`/`admin`):
+
+```bash
+kubectl port-forward -n falco svc/falco-falcosidekick-ui 2802:2802   # http://localhost:2802
+```
+
+Remove with `./uninstall-falco.sh`.
+
+## Tuning notes (honest caveats)
+
+- **Allow-list:** run the app, watch a few minutes of Falco output, and add any
+  legitimate startup process names to `embedding_app_allowed_procs` (uvicorn may
+  appear as `python3.x`). Tune once, then it's quiet.
+- **Driver:** `modern_ebpf` needs kernel ≥ 5.8 with BTF. If Falco pods
+  crashloop, switch `driver.kind` to `ebpf` or `auto` in `values.yaml`.
+- **Runtime:** make sure `collectors` matches your Minikube container runtime
+  (docker vs containerd).
+- **Two rules become *hard* guarantees with one-line Pod hardening each:**
+  set `securityContext.readOnlyRootFilesystem: true` (+ a `/tmp` emptyDir) to
+  back rule 4, and `automountServiceAccountToken: false` to back rule 5. Worth
+  doing — they turn "detect" into "prevent + detect".
+
+## Scope
+
+These rules are scoped to `container.name = "ai-embedding-app"` (sourced from the
+Kubernetes container label via the runtime, so no `k8smeta` plugin required).
+Broaden to `container.image.repository` or a namespace match if you prefer.
